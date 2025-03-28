@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Load_From_DB" Id="{288b7d72-187f-475c-b181-ca48b3ffd373}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Load_From_DB
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+    bCONNECT: BOOL;
+    bEXECUTE: BOOL;
+    bREAD : BOOL;
+    bDISCONNECT: BOOL;
+    
+    R_TRIG1: R_TRIG;    
+    R_TRIG2: R_TRIG;
+    R_TRIG3: R_TRIG;
+    R_TRIG4: R_TRIG;
+        
+    nState: INT;
+    nState_Connect: INT;
+    nState_Disconnect: INT;
+    
+    bConn: BOOL;
+    bSP: BOOL;    
+    bResult: BOOL;
+    bData: BOOL;
+        
+    nDBID: UDINT := 1;
+    
+    fbSQLDatabase: FB_SQLDatabaseEvt(sNetID:='', tTimeout:=T#10S);
+    fbSQLStoredProcedure: FB_SQLStoredProcedureEvt(
+                        sNetID:='', tTimeout:=T#10S);
+    fbSQLResult: FB_SQLResultEvt(sNetID:='', tTimeout:=T#10S);
+    
+    arrParameter: ARRAY [0..0] OF ST_SQLSPParameter;
+    
+    nCustomerID: DINT := 12345;
+    
+    nRecordStartIndex: UDINT;
+    stRecordArr: ARRAY [1..20] OF stRECORD;
+    nRecs: UDINT;            
+    
+    ipResultEvt : Tc3_Eventlogger.I_TcMessage;
+    bError : BOOL;
+    nEventID: UDINT;
+    sEventClass : STRING(255);
+    sEventMsg : STRING(255);
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//R_TRIG1(CLK:=bCONNECT);
+//IF R_TRIG1.Q AND nState = 0 THEN
+//    nState := 1;
+//END_IF    
+
+//R_TRIG2(CLK:=bEXECUTE);
+//IF R_TRIG2.Q AND nState = 0 THEN
+//    nState := 2;
+//END_IF    
+
+//R_TRIG3(CLK:=bREAD);
+//IF R_TRIG3.Q AND nState = 0 THEN
+//    nState := 3;
+//END_IF
+
+//R_TRIG4(CLK:=bDISCONNECT);
+//IF R_TRIG4.Q THEN
+//    nState := 4;
+//END_IF
+
+//CASE nState OF
+//0:(*Idle*)
+//    ;
+//1: // Connect to database and create stored procedure instance 
+//    CASE nState_Connect OF
+//        0:
+//            IF fbSQLDatabase.Connect(hDBID:= nDBID) THEN
+//                ipResultEvt := fbSQLDatabase.ipTcResult;
+//                bConn := NOT fbSQLDatabase.bError;
+//                IF bConn THEN
+//                    nState_Connect := 1;
+//                ELSE
+//                    nState:=200;
+//                END_IF
+//            END_IF 
+//        1:
+//            arrParameter[0].sParameterName := '@Customer_ID';
+//            arrParameter[0].eParameterDataType := 
+//                            Tc3_Database.E_ColumnType.Integer;
+//            arrParameter[0].eParameterType := E_SPParameterType.Input;
+//            arrParameter[0].nParameterSize := SIZEOF(nCustomerID);
+                        
+//            IF fbSQLDatabase.CreateSP('SP_GetAddressByCustomerID',
+//                         ADR(arrParameter), SIZEOF(arrParameter),
+//                        ADR(fbSQLStoredProcedure)) THEN
+//                ipResultEvt:= fbSQLDatabase.ipTcResult;
+//                bSP := NOT fbSQLDatabase.bError;
+//                nState_Connect:=0;
+//                nState := 200;                    
+//            END_IF            
+//    END_CASE
+//2: // Execute stored procedure
+//    IF fbSQLStoredProcedure.ExecuteDataReturn(
+//                        pParameterStrc:= ADR(nCustomerID),
+//                        cbParameterStrc:= SIZEOF(nCustomerID),
+//                        pSQLDBResult:= ADR(fbSQLResult)) THEN
+//        ipResultEvt:= fbSQLStoredProcedure.ipTcResult;
+//        MEMSET(ADR(stRecordArr),0,SIZEOF(stRecordArr));
+//        bResult := NOT fbSQLStoredProcedure.bError;
+//        nState := 200;            
+//    END_IF
+//3:    // Read customer positions
+//    IF fbSQLResult.Read(nRecordStartIndex, 20, ADR(stRecordArr),
+//                    SIZEOF(stRecordArr), TRUE, FALSE) THEN
+//        ipResultEvt:= fbSQLResult.ipTcResult;
+//        bData := NOT fbSQLStoredProcedure.bError;
+//        nRecs := fbSQLResult.nDataCount;
+//        nState := 200;                        
+//    END_IF
+//4:// Disconnect all
+//    CASE nState_Disconnect OF
+//        0:
+//            IF bData THEN
+//                IF fbSQLResult.Release() THEN
+//                    nState_Disconnect := 1;
+//                END_IF
+//            ELSE
+//                nState_Disconnect := 1;
+//            END_IF
+//        1:
+//            IF bSP THEN
+//                IF fbSQLStoredProcedure.Release() THEN
+//                    nState_Disconnect := 2;
+//                END_IF
+//            ELSE
+//                nState_Disconnect := 2;
+//            END_IF
+//        2:
+//            IF bConn THEN
+//                IF fbSQLDatabase.Disconnect() THEN
+//                    nState_Disconnect := 3;
+//                END_IF
+//            ELSE
+//                nState_Disconnect := 3;
+//            END_IF
+//        3:
+//            bData := FALSE;
+//            bSP := FALSE;
+//            bConn := FALSE;
+//            bResult := FALSE;
+//            sEventClass := "";
+//            sEventMsg := "";
+//            nEventID := 0;
+//            bError := FALSE;
+//            nState_Disconnect := 0;
+//            nState := 0;
+//    END_CASE
+//200:
+//    IF ipResultEvt.RequestEventText(1033, sEventMsg, SIZEOF(sEventMsg)) THEN
+//        nState := 201;
+//    END_IF
+//201:
+//    IF ipResultEvt.RequestEventClassName(1033, sEventClass, SIZEOF(sEventClass)) THEN
+
+//        nEventID := ipResultEvt.nEventId;
+
+//        bError := (ipResultEvt.eSeverity = TcEventSeverity.Error) OR
+//                 (ipResultEvt.eSeverity = TcEventSeverity.Critical);
+
+//        nState:=0;
+//    END_IF
+//END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Load_From_DB">
+      <LineId Id="91" Count="17" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="110" Count="101" />
+      <LineId Id="109" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

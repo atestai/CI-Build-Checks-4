@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stPOWER_PLANT" Id="{a4ea4628-af45-4c68-b3bb-51aebb224c98}">
+    <Declaration><![CDATA[TYPE stPOWER_PLANT :
+STRUCT
+	// TO DO: in futuro, spostare tutte le variabili riguardanti l'impianto qui dentro
+	safety_margin: REAL;
+	max_power_increase: REAL; 
+	ramp_limit: REAL; //[kW/min]
+	sample_time: REAL;
+	current_time: REAL;
+	
+	max_kw_change_3s: REAL;		// TO DO: questa variabile è rappresenta un'ulteriore limitazione che può essere presente in alcuni casi
+	
+	nominal_power: REAL := 1E4;
+	
+	avg_prod: REAL; 	// floating average level of production
+	avg_prod_diff: REAL;
+	
+	avg_prod_3h: REAL; 	// average level of production over 3 hours. This variable is specific for the CosmoEco project 
+	std_deviation_prod: REAL;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Module_Executor" Id="{15e6fafa-b7bb-466f-9b3b-6252714b9db6}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Module_Executor
+VAR_INPUT
+	input: STRING(255);
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	read_meter: ARRAY[1..GVL.n_meter] OF FB_Read_Meter;
+	check_inverter_health: FB_Check_Inverter_Health;
+	active_power_ctrl: Active_Power_Regulation;
+	reactive_power_ctrl: Reactive_Power_Regulation;
+	acquire_setpoint_mqtt: MQTT_TSO_Comm;
+	command_dispatcher: FB_Command_Dispatcher;
+	load_following: FB_Load_Following;
+	i: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF input = TO_STRING("read_meter") THEN
+	FOR i := 1 TO GVL.n_meter DO
+		read_meter[i](tcp_port := GVL.meter_arr[i].tcp_port, nUnitID := GVL.meter_arr[i].unit_id, 
+						nQuantity_Act_Pwr := GVL.meter_arr[i].nQuantity_Act_Pwr, nMBAddr_Act_Pwr := GVL.meter_arr[i].nMBAddr_Act_Pwr, 
+						nQuantity_React_Pwr := GVL.meter_arr[i].nQuantity_React_Pwr, nMBAddr_React_Pwr := GVL.meter_arr[i].nMBAddr_React_Pwr,		
+						i := i);	
+	END_FOR
+	Update_Virtual_Meter();
+END_IF
+
+
+IF input = TO_STRING("check_inverter_health") THEN
+	check_inverter_health();
+END_IF
+
+
+IF input = TO_STRING("acquire_setpoint_mqtt") THEN
+	acquire_setpoint_mqtt();
+END_IF
+
+
+IF input = TO_STRING("active_power_ctrl") THEN
+	active_power_ctrl();
+END_IF
+
+
+IF input = TO_STRING("reactive_power_ctrl") THEN
+	reactive_power_ctrl();
+END_IF
+
+
+IF input = TO_STRING("command_dispatcher") THEN
+	command_dispatcher();
+END_IF
+
+
+IF input = TO_STRING("load_following") THEN
+	load_following();
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Module_Executor">
+      <LineId Id="23" Count="1" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="112" Count="1" />
+      <LineId Id="116" Count="2" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="91" Count="2" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="97" Count="3" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="135" Count="3" />
+      <LineId Id="134" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

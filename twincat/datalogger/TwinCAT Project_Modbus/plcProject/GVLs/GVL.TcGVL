@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <GVL Name="GVL" Id="{215805bd-5bd5-4da2-ba43-c0dab5a2bb39}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	MAX_DEVICE : UINT := 32 + 16; //32
+	MAX_READ_PARAMETER : INT := 128 + 128 ; //128
+	MAX_VALUE_FOR_READ_PARAMETER : INT := 128 + 128; //128;
+	
+	
+	MAX_IO : UINT := 32 + 32 ;
+  
+	//testEAP AT %Q*: BYTE;
+
+END_VAR
+
+VAR_GLOBAL 
+	
+	devices: ARRAY[1..MAX_DEVICE] OF DEVICE;
+	devicesCount: INT;
+	
+	primaryTime : TIME := T#15S;  
+
+	PLC_On: BOOL := FALSE;
+
+	mb_Output_Registers : ARRAY [1..MAX_IO] OF WORD;
+	
+	enableRTU : BOOL := FALSE;
+	enableIO : BOOL := FALSE;
+	
+END_VAR
+
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="PF_ET" Id="{dedf0f19-f949-4bc6-8bc2-f6e28fad2aaa}">
+    <Declaration><![CDATA[TYPE PF_ET :
+STRUCT
+	A: ARRAY[1..2] OF WORD;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Calculate_Opt_SOC_Based_On_Conditions" Id="{321c41fb-6b1f-4eba-989f-70cc4e60a5bc}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION Calculate_Opt_SOC_Based_On_Conditions : REAL
+VAR_INPUT
+	remaining_battery_capacity: REAL;
+	max_diff_per_sample: REAL;
+END_VAR
+VAR
+	optimal_val_for_current_soc: REAL;
+	decrease_time: REAL;
+	time_to_reach: REAL;
+	charge_request: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[optimal_val_for_current_soc := remaining_battery_capacity / 3;
+decrease_time := optimal_val_for_current_soc / (max_diff_per_sample * 1200);	// TO DO: parametrizzare
+optimal_val_for_current_soc := remaining_battery_capacity / (3+decrease_time + 0.1);
+
+time_to_reach := (GVL.VIRTUAL_METER.active_power_prod - optimal_val_for_current_soc) / (max_diff_per_sample * 1200);
+charge_request := ((GVL.VIRTUAL_METER.active_power_prod - optimal_val_for_current_soc) /2 ) * time_to_reach; 
+
+optimal_val_for_current_soc := (remaining_battery_capacity + charge_request)/(3 + decrease_time + 0.1);
+optimal_val_for_current_soc := optimal_val_for_current_soc/95*100;
+
+Calculate_Opt_SOC_Based_On_Conditions := optimal_val_for_current_soc; 
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="Calculate_Opt_SOC_Based_On_Conditions">
+      <LineId Id="48" Count="11" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

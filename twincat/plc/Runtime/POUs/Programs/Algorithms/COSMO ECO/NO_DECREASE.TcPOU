@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="No_Decrease" Id="{167d97b5-576e-4000-942b-e8fe46d8cfbe}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION No_Decrease : stCMD_SET
+VAR_INPUT
+END_VAR
+VAR
+	remaining_battery_capacity: REAL;
+	remaining_limitation_hours: REAL;
+	constant_kw_to_support: REAL;
+	hours_battery_support: REAL;
+	target: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[GVL.power_plant.max_power_increase := GVL.power_plant.ramp_limit/(60/GVL.power_plant.sample_time);
+remaining_battery_capacity := (GVL.battery.soc - GVL.battery.min_soc + 0.02) * GVL.battery.capacity; //  TO DO: parametrizzare il margine di sicurezza +0.02 
+constant_kw_to_support := (GVL.VIRTUAL_POI_METER.active_power_prod + GVl.power_plant.max_power_increase)/GVL.battery.efficiency;
+
+remaining_limitation_hours := GVL.WISNAM_PPC.timeslot.end - GVL.power_plant.current_time;
+
+
+IF constant_kw_to_support > 0 THEN
+		
+	hours_battery_support := (remaining_battery_capacity / constant_kw_to_support);   
+		
+ELSE
+	
+	hours_battery_support := 24.0;
+		
+END_IF
+	
+
+	
+IF (GVL.VIRTUAL_METER.active_power_prod > GVL.VIRTUAL_POI_METER.active_power_prod) AND (hours_battery_support >= remaining_limitation_hours) THEN		   // If the production is increasing and battery would last enough, we increase the target at POI  
+	
+	target := GVL.VIRTUAL_POI_METER.active_power_prod + GVL.power_plant.max_power_increase * GVL.battery.soc;
+	
+	IF target > GVL.power_plant.nominal_power THEN 		
+		
+		target := GVL.power_plant.nominal_power;			
+		
+	END_IF
+ELSE 
+	
+	target := GVL.VIRTUAL_POI_METER.active_power_prod; 
+END_IF
+
+
+No_Decrease.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target)/(3600/GVL.power_plant.sample_time);
+No_Decrease.plant_sp := GVL.VIRTUAL_METER.active_power_prod / GVL.power_plant.nominal_power;
+
+
+IF GVL.battery.soc > GVL.battery.max_tolerable_soc OR (*(PowerPlant.ReachingSetPoint AND*) GVL.battery.soc > GVl.battery.soc_to_remove_sp THEN		// If battery is too high when entering the timeslot, a setpoint is needed
+	
+	//PowerPlant.ReachingSetPoint := TRUE;
+	No_Decrease.plant_sp := GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power + 0.001;	// TO DO: parametrizzare questo valore
+
+ELSE 
+	
+	//PowerPlant.ReachingSetPoint := FALSE;
+	IF No_Decrease.plant_sp <> 1 THEN
+		
+		No_Decrease.plant_sp := 1;
+	
+	ELSE
+	
+		No_Decrease.plant_sp := -2;
+	
+	END_IF
+END_IF
+
+IF No_Decrease.plant_sp > 1 THEN
+	
+	No_Decrease.plant_sp := 1;	
+
+END_IF ]]></ST>
+    </Implementation>
+    <LineIds Name="No_Decrease">
+      <LineId Id="131" Count="60" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

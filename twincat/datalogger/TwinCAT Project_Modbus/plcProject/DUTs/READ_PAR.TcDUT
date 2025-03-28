@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="READ_PAR" Id="{df7914f7-db7d-4e17-b86f-83b8c0d26c23}">
+    <Declaration><![CDATA[TYPE READ_PAR :
+STRUCT
+	id : DINT := 0;
+	ReadAddress: WORD := 0;
+	ReadQty: WORD := 0;
+	ModbusFunction : BYTE := 0;
+	ReadCount: WORD;
+ 
+	AuxArr : ARRAY[1..GVL.MAX_VALUE_FOR_READ_PARAMETER] OF WORD;
+	
+	//fault : BOOL := FALSE;
+	//TypeArr : ARRAY[1..GVL.MAX_VALUE_FOR_READ_PARAMETER] OF STRING;
+	//ValueArr: ARRAY[1..GVL.MAX_VALUE_FOR_READ_PARAMETER] OF REAL;
+	
+	bBusy: BOOL;
+	bError: BOOL;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

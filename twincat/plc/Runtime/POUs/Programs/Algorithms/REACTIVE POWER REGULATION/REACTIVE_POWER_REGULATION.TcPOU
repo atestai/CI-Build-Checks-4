@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Reactive_Power_Regulation" Id="{b0161329-0da3-4409-b642-feca8ea2b97d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Reactive_Power_Regulation
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	difference: REAL;
+	update_pi_sp_q: FB_PI_Setpoint;
+	i: UINT;
+	norm_error_mem: REAL;
+	react_pwr_voltage_ctrl: FB_ReactivePwr_Voltage_Ctrl;
+	reach_sp: FB_Reach_SP_ReactP;
+	temp_sp: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF GVL.WISNAM_PPC.reactive_power_ctrl_enabled OR GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+	
+	IF NOT GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+		temp_sp := sp_input_reducer(sp_auto := GVL_React_Pwr.setpoint_auto, sp_manual := GVL_React_Pwr.setpoint_manual, sp_tso := GVL_React_Pwr.setpoint_tso);
+		IF temp_sp <> GVL_React_Pwr.setpoint_mem THEN
+			GVL_React_Pwr.setpoint := Low_Pass_Filter(plant_target := temp_sp, filter_output_mem := GVL_React_Pwr.setpoint_mem, alpha := GVL.plant_sp_alpha); 
+			GVL_React_Pwr.target_prod := GVL_React_Pwr.setpoint * GVL.power_plant.nominal_power;
+		END_IF
+	END_IF
+	
+	/// controllo potenza reattiva - tensione ///
+	IF GVL.WISNAM_PPC.qv_ctrl_enabled THEN
+		GVL_React_Pwr.p_nd := 0;
+		FOR i := 1 TO GVL.n_slave DO
+			IF GVL.inv[i].health = 1 THEN
+				GVL_React_Pwr.p_nd := GVL_React_Pwr.p_nd + GVL.inv[i].active_pwr_nominal_pwr;
+			END_IF
+		END_FOR
+		GVL_React_Pwr.p_nd := GVL_React_Pwr.p_nd / GVL.power_plant.nominal_power;
+	
+		GVL_Voltage.v_norm := GVL.VIRTUAL_METER.measured_voltage / GVL_Voltage.reference_value; // PLOT
+		GVL_Voltage.error := GVL.VIRTUAL_METER.measured_voltage - GVL_Voltage.reference_value; 
+		GVL_Voltage.norm_error := GVL_Voltage.error / GVL_Voltage.reference_value;
+		GVL_Voltage.norm_error := Low_Pass_Filter(plant_target := GVL_Voltage.norm_error, filter_output_mem := norm_error_mem, alpha := GVL_React_Pwr.setpoint_alpha);
+		norm_error_mem := GVL_Voltage.norm_error; 
+		
+		react_pwr_voltage_ctrl();
+	ELSE
+		GVL_Voltage.output_qv_regulation := 0;
+	END_IF	
+	
+	
+	
+//	IF GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+		
+//		GVL_React_Pwr.target_prod := TO_REAL((GVL.VIRTUAL_METER.active_power_prod / GVL_React_Pwr.power_factor_target) * SQRT(1 - EXPT(GVL_React_Pwr.power_factor_target,2)));
+//		GVL_React_Pwr.setpoint := GVL_React_Pwr.target_prod / GVL.power_plant.nominal_power;
+		
+//	END_IF
+	
+	
+	/// 8. PLANT TARGET (chiedi Carmelo)/// 
+	GVL_React_Pwr.total_sp := GVL_React_Pwr.setpoint + GVL_Voltage.output_qv_regulation;
+	
+	IF GVL_React_Pwr.total_sp > GVL_React_Pwr.max_q_pf_regulation AND GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+		
+		GVL_React_Pwr.total_sp := GVL_React_Pwr.max_q_pf_regulation;
+	
+	END_IF
+	
+	
+	IF (GVL_React_Pwr.setpoint < 0) OR (GVL_React_Pwr.setpoint > GVL.power_plant_max_sp_q) THEN
+		GVL_React_Pwr.setpoint := GVL_React_Pwr.setpoint_mem;
+	END_IF
+	
+	/// minimum step size: 5% ///
+	IF (GVL_React_Pwr.setpoint_mem = 0 AND (GVL_React_Pwr.setpoint > 0 AND GVL_React_Pwr.setpoint < 0.05)) THEN
+		GVL_React_Pwr.setpoint := 0.05;
+	END_IF
+	
+	IF (GVL_React_Pwr.setpoint < 0.05 AND GVL_React_Pwr.setpoint_mem >= 0.05) THEN
+		GVL_React_Pwr.setpoint := 0;
+	END_IF
+	
+	
+//	difference := GVL_React_Pwr.setpoint - GVL_React_Pwr.setpoint_mem; 
+//	IF ABS(difference) > GVL.power_plant_max_sp_increase_q THEN
+//		IF difference > 0 THEN	
+//			GVL_React_Pwr.setpoint := GVL_React_Pwr.setpoint_mem + GVL.power_plant_max_sp_increase_q;
+//		ELSE
+//			GVL_React_Pwr.setpoint := GVL_React_Pwr.setpoint_mem - GVL.power_plant_max_sp_increase_q;
+//		END_IF
+//	END_IF
+//	GVL_React_Pwr.setpoint_mem := GVL_React_Pwr.setpoint;
+	
+	GVL_React_Pwr.setpoint_mem := GVL_React_Pwr.setpoint;	
+
+	reach_sp(sp_target_reactp := GVL_React_Pwr.total_sp);
+	
+
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Reactive_Power_Regulation">
+      <LineId Id="103" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="179" Count="1" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="132" Count="2" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="162" Count="1" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="218" Count="2" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="14" Count="1" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="249" Count="1" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="245" Count="1" />
+      <LineId Id="17" Count="12" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="30" Count="10" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

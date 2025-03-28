@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stRECORD" Id="{96658c97-e292-4a08-b7d9-0d50952c4ab2}">
+    <Declaration><![CDATA[TYPE stRECORD :
+STRUCT
+	sp_value: REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stMETER" Id="{deb8a2d0-868c-42cc-b809-42d8d6000425}">
+    <Declaration><![CDATA[TYPE stMETER :
+STRUCT
+	
+	/// MODBUS ///
+	tcp_port: UINT := 9501;
+	unit_id: BYTE;
+	server_ip_addr: STRING(255);
+	
+	/// ACTIVE POWER ///
+	frequency: REAL;
+	active_power_prod: REAL;
+	active_power_sp: REAL;
+	nQuantity_Act_Pwr: WORD;
+	nMBAddr_Act_Pwr: WORD;
+	
+	/// REACTIVE POWER ///
+	reactive_power_prod: REAL;
+	reactive_power_sp: REAL;
+	measured_voltage: REAL;
+	nQuantity_React_Pwr: WORD;
+	nMBAddr_React_Pwr: WORD;
+	
+	pos: stGRID_POS;	// questa variabile specifica dove è installato l'inverter e consente di distinguere meter di griglia (poi) da meter d'impianto (pu)
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="POU_CONV_WORD_TO_DINT_INVERSE_FC" Id="{8544993c-b773-4a1e-a70e-d7132b53b163}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION POU_CONV_WORD_TO_DINT_INVERSE_FC : UDINT
+VAR_INPUT
+	REG1: WORD;
+	REG2: WORD;
+END_VAR
+
+VAR
+//	APP1: WORD;
+//	APP2: WORD;
+	
+	APP: DWORD;
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//	APP1:= WORD_TO_DWORD(REG1);
+//	APP2:= SHL(WORD_TO_DWORD(REG2),16);
+//	APP:= APP1 OR APP2;
+//	POU_CONV_WORD_TO_DINT_INVERSE_FC := DWORD_TO_DINT(APP2);
+
+//APP1.0:=REG1.15;
+//APP1.1:=REG1.14;
+//APP1.2:=REG1.13;
+//APP1.3:=REG1.12;
+//APP1.4:=REG1.11;
+//APP1.5:=REG1.10;
+//APP1.6:=REG1.9;
+//APP1.7:=REG1.8;
+//APP1.8:=REG1.7;
+//APP1.9:=REG1.6;
+//APP1.10:=REG1.5;
+//APP1.11:=REG1.4;
+//APP1.12:=REG1.3;
+//APP1.13:=REG1.2;
+//APP1.14:=REG1.1;
+//APP1.15:=REG1.0;
+
+//APP2.0:=REG2.15;
+//APP2.1:=REG2.14;
+//APP2.2:=REG2.13;
+//APP2.3:=REG2.12;
+//APP2.4:=REG2.11;
+//APP2.5:=REG2.10;
+//APP2.6:=REG2.9;
+//APP2.7:=REG2.8;
+//APP2.8:=REG2.7;
+//APP2.9:=REG2.6;
+//APP2.10:=REG2.5;
+//APP2.11:=REG2.4;
+//APP2.12:=REG2.3;
+//APP2.13:=REG2.2;
+//APP2.14:=REG2.1;
+//APP2.15:=REG2.0;
+
+//POU_CONV_WORD_TO_DINT_INVERSE_FC := DWORD_TO_DINT(SHL(WORD_TO_DWORD(APP1),16) OR WORD_TO_DWORD(APP2));
+
+APP.0 :=REG2.15;
+APP.1 :=REG2.14;
+APP.2 :=REG2.13;
+APP.3 :=REG2.12;
+APP.4 :=REG2.11;
+APP.5 :=REG2.10;
+APP.6 :=REG2.9;
+APP.7 :=REG2.8;
+APP.8 :=REG2.7;
+APP.9 :=REG2.6;
+APP.10:=REG2.5;
+APP.11:=REG2.4;
+APP.12:=REG2.3;
+APP.13:=REG2.2;
+APP.14:=REG2.1;
+APP.15:=REG2.0;
+   
+APP.16:=REG1.15;
+APP.17:=REG1.14;
+APP.18:=REG1.13;
+APP.19:=REG1.12;
+APP.20:=REG1.11;
+APP.21:=REG1.10;
+APP.22:=REG1.9;
+APP.23:=REG1.8;
+APP.24:=REG1.7;
+APP.25:=REG1.6;
+APP.26:=REG1.5;
+APP.27:=REG1.4;
+APP.28:=REG1.3;
+APP.29:=REG1.2;
+APP.30:=REG1.1;
+APP.31:=REG1.0;
+
+POU_CONV_WORD_TO_DINT_INVERSE_FC := DWORD_TO_UDINT(APP);
+
+RETURN;]]></ST>
+    </Implementation>
+    <LineIds Name="POU_CONV_WORD_TO_DINT_INVERSE_FC">
+      <LineId Id="9" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="41" Count="6" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="50" Count="1" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="52" Count="1" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="77" Count="15" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="98" Count="33" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

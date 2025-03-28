@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_Act_Pwr" Id="{eba09a78-efae-4260-9b7a-848d4e1bd4ef}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	
+	/// ACTIVE POWER REGULATION ///
+	target_prod: REAL;
+	setpoint: REAL;
+	total_sp: REAL;
+	setpoint_mem: REAL;
+	expected_pod_prod: REAL;
+	setpoint_to_send: REAL;
+	error_pi: REAL;
+	pi_correction: REAL;
+	setpoint_to_send_feed_forward: REAL;
+	filtered_setpoint: REAL;
+	low_pass_filter_mem: REAL;
+	ff_pi_control_enable: BOOL := FALSE;
+	active_p_ctrl_case: UINT := 1;
+	setpoint_alpha: REAL := 0.1;
+	sp_tolerance: REAL := 0.002;
+	
+	setpoint_manual: REAL;
+	setpoint_auto: REAL;
+	setpoint_tso: REAL;
+	
+	time_limit_sp_application: TIME := T#20S;
+	ramp_rate_ctrl: BOOL := TRUE;
+	ramp_rate_follow_inv: BOOL := TRUE;
+	
+	pi_ctrl_max_output: REAL := 1;
+	pi_ctrl_min_output: REAL := -1;
+	
+	freq_reg_sp: REAL;	//setpoint derivante dalla regolazione in frequenza
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

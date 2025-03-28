@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="outputQV_regulation" Id="{3203a973-2bd1-468d-95be-2e1d2f1ceeae}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION outputQV_regulation : real
+VAR_INPUT
+END_VAR
+VAR
+	current_v: REAL;
+	v_nom: REAL := 1000;
+	deadband: REAL := 0.05;
+	hyst: REAL := 0.02;
+	statism: REAL := 3;	// [0, 100] %
+	increment_threshold: REAL := 0.08;
+	q_max_variation: REAL := 0.2;
+	q_fixed_increment: REAL := 0.005;
+	
+	lower_db: REAL := v_nom - deadband * v_nom;
+	upper_db: REAL := v_nom + deadband * v_nom;
+	
+	lower_hyst: REAL := v_nom * (1 - hyst);
+	upper_hyst: REAL := v_nom * (1 + hyst);
+	
+	lower_inc_th: REAL := v_nom - increment_threshold;
+	upper_inc_th: REAL := v_nom + increment_threshold;
+	
+	v_error: REAL;
+	q_delta: REAL;
+	
+	norm_s: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[current_v := GVL.VIRTUAL_METER.measured_voltage;
+
+IF current_v < lower_db OR current_v > upper_db THEN
+	
+	GVL_React_Pwr.voltage_hyst_enable := TRUE;
+
+END_IF
+
+
+IF GVL_React_Pwr.voltage_hyst_enable THEN
+	
+	IF lower_hyst < current_v AND current_v < upper_hyst THEN
+		
+		GVL_React_Pwr.voltage_hyst_enable := FALSE;
+		outputQV_regulation := GVL.VIRTUAL_METER.reactive_power_sp;
+		RETURN;
+	
+	END_IF
+
+	
+	IF current_v < lower_hyst THEN
+		
+		IF current_v < lower_inc_th THEN
+			
+			v_error := ABS(v_nom - current_v);
+			norm_s := statism / 100 ;
+			q_delta := MIN(v_error * norm_s, q_max_variation);
+			outputQV_regulation := GVL.VIRTUAL_METER.reactive_power_sp + q_delta;
+			RETURN;
+			
+		ELSE
+			
+			outputQV_regulation := GVL.VIRTUAL_METER.reactive_power_sp + q_fixed_increment;
+			RETURN;
+			
+		END_IF
+	
+	END_IF
+	
+	
+	IF current_v > upper_hyst THEN
+		
+		IF current_v > upper_inc_th THEN
+			
+			v_error := ABS(v_nom - current_v);
+			norm_s := statism / 100 ;
+			q_delta := MIN(v_error * norm_s, q_max_variation);
+			outputQV_regulation := GVL.VIRTUAL_METER.reactive_power_sp - q_delta;
+			RETURN;
+			
+		ELSE
+	
+			outputQV_regulation := GVL.VIRTUAL_METER.reactive_power_sp - q_fixed_increment;
+			RETURN;
+	
+		END_IF
+	
+	END_IF
+	
+END_IF
+
+outputQV_regulation := GVL.VIRTUAL_METER.reactive_power_sp;]]></ST>
+    </Implementation>
+    <LineIds Name="outputQV_regulation">
+      <LineId Id="89" Count="1" />
+      <LineId Id="8" Count="58" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

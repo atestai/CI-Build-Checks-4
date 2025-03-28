@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="MQTT_TSO_Comm" Id="{6ace0b07-0fd6-4f83-ad90-11c5d4ba4861}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK MQTT_TSO_Comm
+VAR_OUTPUT
+END_VAR
+VAR
+	init_mqtt: BOOL := TRUE;
+	mqtt_client: FB_IotMqttClient;
+	message_queue: FB_IotMqttMessageQueue;
+	message: FB_IotMqttMessage;
+	
+	subscribed_act_pwr: BOOL;
+	topic_act_pwr: STRING(255) := 'act_p_setpoint/topic';
+	receiving_topic_act_pwr: STRING(255);
+	receiving_data_act_pwr: STRING(255);
+	
+	subscribed_react_pwr: BOOL;
+	topic_react_pwr: STRING(255) := 'react_p_setpoint/topic';
+	receiving_topic_react_pwr: STRING(255);
+	receiving_data_react_pwr: STRING(255);
+	
+	receiving_topic: STRING(255);
+	receiving_data: STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF init_mqtt THEN
+	mqtt_client.sHostName := 'localhost';
+	mqtt_client.nHostPort := 1883;
+	mqtt_client.sTopicPrefix := '';
+	mqtt_client.ipMessageQueue := message_queue;
+	mqtt_client.sClientId := 'TSO';
+	
+	init_mqtt := FALSE;
+END_IF
+
+mqtt_client.Execute(bConnect := TRUE);
+
+IF mqtt_client.bConnected THEN
+	IF NOT subscribed_act_pwr AND GVL.WISNAM_PPC.active_power_ctrl_enabled THEN
+		subscribed_act_pwr := mqtt_client.Subscribe(sTopic := topic_act_pwr, eQoS := TcIotMqttQos.AtMostOnceDelivery);
+	END_IF
+	
+	IF NOT subscribed_react_pwr AND GVL.WISNAM_PPC.reactive_power_ctrl_enabled THEN
+		subscribed_react_pwr := mqtt_client.Subscribe(sTopic := topic_react_pwr, eQoS := TcIotMqttQos.AtMostOnceDelivery);
+	END_IF
+END_IF
+
+IF message_queue.nQueuedMessages > 0 THEN
+	IF message_queue.Dequeue(fbMessage := message) THEN
+		message.GetTopic(pTopic := ADR(receiving_topic), nTopicSize := SIZEOF(receiving_topic));	
+		message.GetPayload(pPayload := ADR(receiving_data), nPayloadSize := SIZEOF(receiving_data), bSetNullTermination := FALSE);
+		
+		IF receiving_topic = 'act_p_setpoint/topic' THEN
+			GVL_Act_Pwr.setpoint_tso := setpoint_acquired(message_received := receiving_data);
+		ELSIF receiving_topic = 'react_p_setpoint/topic' THEN 
+			GVL_React_Pwr.setpoint_tso := setpoint_acquired(message_received := receiving_data);
+		END_IF
+
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="MQTT_TSO_Comm">
+      <LineId Id="1" Count="34" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

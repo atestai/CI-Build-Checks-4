@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_Modules" Id="{73366c36-9cad-49be-b534-11068e698916}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	n_modules: UINT := 7;
+END_VAR
+VAR_GLOBAL
+	read_meter: STRING(255) := 'read_meter';
+	check_inverter_health: STRING(255) := 'check_inverter_health';
+	active_power_ctrl: STRING(255) := 'active_power_ctrl'; 
+	reactive_power_ctrl: STRING(255) := 'reactive_power_ctrl';
+	command_dispatcher: STRING(255) := 'command_dispatcher';
+	acquire_setpoint_mqtt: STRING(255) := 'acquire_setpoint_mqtt';
+	load_following: STRING(255) := 'load_following';
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

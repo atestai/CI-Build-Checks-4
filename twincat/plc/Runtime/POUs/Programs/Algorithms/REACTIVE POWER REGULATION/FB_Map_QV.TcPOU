@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Map_QV" Id="{37be17ce-be6c-451d-b406-f197c7e7f39c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Map_QV
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	A: stQV_POINT;
+	B: stQV_POINT;
+	C: stQV_POINT;
+	D: stQV_POINT;
+	E: stQV_POINT;
+	F: stQV_POINT;
+	G: stQV_POINT;
+	
+	max_qv_correction: REAL;
+	min_qv_correction: REAL;
+	v_ratio: REAL;
+	t: REAL;
+	i: UINT;
+	x: REAL;
+	y: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[v_ratio := GVL.VIRTUAL_METER.measured_voltage / GVL_Voltage.reference_value;
+
+/// definizione delle coordiante dei punti della mappa Q/V///
+A.q_pnd_ratio := 0;
+A.voltage_ratio := 1.1;
+
+B.q_pnd_ratio := 0.30;
+B.voltage_ratio := 1.05;
+
+C.q_pnd_ratio := 0.30;
+C.voltage_ratio := 0.95;
+
+D.q_pnd_ratio := 0;
+D.voltage_ratio := 0.9;
+
+E.q_pnd_ratio := -0.35;
+E.voltage_ratio := 0;
+/////////////////////////////////////////////////////////////
+
+IF v_ratio > B.voltage_ratio AND v_ratio <= A.voltage_ratio THEN
+	min_qv_correction := -0.35;
+	t := (v_ratio - A.voltage_ratio) / (A.voltage_ratio - B.voltage_ratio);
+	max_qv_correction := t*B.q_pnd_ratio + (1 - t)*A.q_pnd_ratio;
+ 
+
+
+ELSIF v_ratio <= B.voltage_ratio AND v_ratio >= C.voltage_ratio THEN
+	max_qv_correction := 0.30;
+	min_qv_correction := -0.35;
+
+
+
+ELSIF v_ratio < C.voltage_ratio AND v_ratio >= D.voltage_ratio THEN
+	max_qv_correction := 0.30;
+	t := (v_ratio - D.voltage_ratio) / (C.voltage_ratio - D.voltage_ratio);
+	min_qv_correction := t*C.q_pnd_ratio + (1 - t)*D.q_pnd_ratio; 
+END_IF 
+
+
+// TO DO: per implementazioni future di una regolazione mediante mappa 
+//FOR i := 1 TO GVL_React_Pwr.n_points DO
+//	IF v_ratio >= GVL_React_Pwr.enhanced_points[i][1] THEN 
+//		x := GVL_React_Pwr.enhanced_points[i][1];
+//		y := GVL_React_Pwr.enhanced_points[i][2];
+//		g := GVL_React_Pwr.enhanced_points[i][3];
+		
+//		GVL_Voltage.output_qv_regulation := y + g*(v_ratio - x);
+//		EXIT
+//	END_IF
+//END_FOR
+
+
+IF GVL_Voltage.output_qv_regulation < min_qv_correction THEN
+	GVL_Voltage.output_qv_regulation := min_qv_correction;
+END_IF
+	
+IF GVL_Voltage.output_qv_regulation > max_qv_correction THEN
+	GVL_Voltage.output_qv_regulation := max_qv_correction;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Map_QV">
+      <LineId Id="21" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="46" Count="3" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="58" Count="1" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="71" Count="1" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="83" Count="1" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="86" Count="2" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="129" Count="7" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="138" Count="8" />
+      <LineId Id="125" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

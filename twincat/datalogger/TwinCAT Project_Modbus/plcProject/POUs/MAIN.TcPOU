@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="MAIN" Id="{06477281-4bdf-4f18-825b-6a63d249d427}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	fbRead: ARRAY [1..GVL.MAX_DEVICE] OF FB_READ_WITHOUT_TIMER;
+	
+	start : BOOL := TRUE;
+
+	//delay : TIME := T#10MS;
+	
+	tTime : TIME;  
+	currentTime : TIME := TIME();
+	  
+	//bExecute : BOOL := FALSE;
+	timermodbus: TON;
+	
+	//inpArray AT %I* : ARRAY[1..GVL.MAX_IO, 1..16] OF BOOL ;
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ParallelScan();
+//SerialScan();
+//IOScan();]]></ST>
+    </Implementation>
+    <Method Name="IOScan" Id="{4006a5c1-8fd1-4571-963e-3b30574d4d2e}">
+      <Declaration><![CDATA[
+METHOD IOScan : BOOL
+
+VAR
+	//i : INT;
+	//j : INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+(*
+IF GVL.enableIO THEN
+	FOR i := 1 TO GVL.MAX_IO DO
+		GVL.mb_Output_Registers[i]  := 0;
+		
+		FOR j := 1 TO 16 DO
+		   IF  inpArray[i, j] THEN
+			   GVL.mb_Output_Registers[i] := GVL.mb_Output_Registers[i]  + LREAL_TO_WORD(EXPT( 2, j - 1 ));
+		   END_IF
+		END_FOR;
+	END_FOR
+END_IF
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ParallelScan" Id="{bd3b1f15-45a9-475b-a4b7-2d9d9940d07c}">
+      <Declaration><![CDATA[METHOD ParallelScan : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	
+
+	i: INT := 0;
+	testCount : ULINT := 0;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF GVL.PLC_On AND GVL.devicesCount > 0  THEN
+		
+	timermodbus(IN:= NOT timermodbus.Q, PT:= GVL.primaryTime, Q=> , ET=> );
+		
+	i := 1;
+	
+	WHILE ( i <= GVL.devicesCount ) DO
+		
+		IF timermodbus.Q THEN
+			testCount := testCount + 1;
+			
+			tTime := TIME() - currentTime;
+			currentTime := TIME();
+		END_IF; 
+		
+		IF GVL.devices[ i ].ServerIP <> '' THEN  
+		
+			fbRead[ i ](
+				device := GVL.devices[ i ],
+				bExecute := timermodbus.Q
+			);	
+		END_IF
+		
+		i := i + 1;
+	END_WHILE
+
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SerialScan" Id="{10d29856-0c63-4374-980c-965402dd987e}">
+      <Declaration><![CDATA[METHOD SerialScan : BOOL
+VAR_INPUT
+END_VAR
+
+VAR
+	i: INT := 0;
+	testCount : ULINT := 0;
+
+	timermodbusRTU: TON;
+	
+	subState: INT;	
+	execRead : BOOL;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="MAIN">
+      <LineId Id="1222" Count="0" />
+      <LineId Id="1241" Count="0" />
+      <LineId Id="1290" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN.IOScan">
+      <LineId Id="75" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="53" Count="7" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="67" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN.ParallelScan">
+      <LineId Id="6" Count="14" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="21" Count="2" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="MAIN.SerialScan">
+      <LineId Id="15" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

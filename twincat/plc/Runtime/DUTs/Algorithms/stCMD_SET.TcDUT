@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stCMD_SET" Id="{0524fe45-0c39-4c6a-983a-b5f5fc4ea561}">
+    <Declaration><![CDATA[TYPE stCMD_SET :
+STRUCT
+	command_for_battery: REAL;
+	plant_sp: REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

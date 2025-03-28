@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_Load_Following" Id="{64529722-93c6-4fd2-835f-e971d3ee7a52}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	
+	p_sp: REAL;
+	
+	delta: REAL := 1E-2;
+	delta_fast: REAL := 1.5E-2;
+	delta_slow: REAL := 0.8E-2;
+	
+	p_sp_max: REAL;
+	p_sp_min: REAL;
+	
+	power_grid_min: REAL := 5000;
+	power_grid_max: REAL := 8000;
+	
+	max_error_perc: REAL := 40;
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

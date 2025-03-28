@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Apply_Setpoint" Id="{9689d6f8-6119-4d62-a4bf-9bd782507e09}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Apply_Setpoint
+VAR_INPUT
+	setpoint: REAL;
+	server_port: UINT;
+	nUnitID: BYTE;
+	nQuantity: WORD;
+	nMBAddr: WORD;
+	exec_read: BOOL;
+END_VAR
+VAR_OUTPUT
+	bBusy: BOOL;
+END_VAR
+VAR
+	timer_sp: TON;	
+	fb_write_holding: FB_MBWriteRegs;
+	bError: BOOL;
+	nErrId: UDINT;
+	ErrId: UDINT;
+	aux_union: stCONV_UNION;
+	r_trig_exec : R_TRIG; 
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[aux_union.prod_real := setpoint;
+
+fb_write_holding(
+	sIPAddr:= GVL.server_addr, 
+	nTCPPort:= server_port, 
+	nUnitID:= nUnitID, 
+	nQuantity:= nQuantity, 
+	nMBAddr:= nMBAddr, 
+	cbLength:= SIZEOF(DWORD), 
+	pSrcAddr:= ADR(aux_union.prod_w), 
+	bExecute:= exec_read, 
+	tTimeout:= T#3S, 
+	bBusy=> bBusy, 
+	bError=> bError, 
+	nErrId=> nErrId
+);
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="Apply_Setpoint">
+      <LineId Id="1" Count="18" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

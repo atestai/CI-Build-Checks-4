@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <GVL Name="GVL" Id="{cd388706-606a-403e-9f18-09d907ed505a}">
+    <Declaration><![CDATA[//// POWER PLANT PARAMETERS ////
+
+VAR_GLOBAL CONSTANT
+	n_slave: UINT := 4;
+	n_meter: UINT := 2;
+	initial_tcp_port: UINT := 9501;
+	server_addr: STRING := '127.0.0.1';
+	
+	n_meter_poi: UINT := 1;
+	n_meter_pu: UINT := 1; 
+	
+	/// MQTT ///
+	max_message_info: UINT := 5; 
+END_VAR
+
+VAR_GLOBAL
+	/// INVERTER PARAMETERS ///
+	inv: ARRAY[1..n_slave] OF stINVERTER;
+	VIRTUAL_METER: stMETER;	/// questo è un meter di impianto
+	meter_arr: ARRAY[1..n_meter] OF stMETER;
+	healthy_inv: UINT := n_slave;
+	
+	/// POWER PLANT PARAMETERS - ACTIVE POWER - ///
+	overall_current_prod: REAL := 0;
+	power_plant_max_sp: REAL := 1;
+	power_plant_max_sp_increase: REAL := 0.25;
+	
+	plant_sp_alpha: REAL := 0.4;
+	
+	/// POWER PLANT PARAMETERS - REACTIVE POWER - ///
+	ReactP_PwrSp: REAL;
+	power_plant_max_sp_q: REAL := 1;
+	power_plant_max_sp_increase_q: REAL := 0.25;
+	sp_tolerance_q : REAL := 0.002;	
+	
+	/// WISNAM PPC ///
+	WISNAM_PPC: stPPC;
+	
+	/// MQTT /// 
+	
+	/// COSMO ECO ///
+	windfarm_time: REAL;
+	
+	
+	power_plant: stPOWER_PLANT;
+	VIRTUAL_POI_METER: stMETER; /// meter di griglia
+	battery: stBESS;
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

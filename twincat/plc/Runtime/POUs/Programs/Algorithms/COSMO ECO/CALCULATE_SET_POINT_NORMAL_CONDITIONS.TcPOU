@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Calculate_Set_Point_Normal_Conditions" Id="{4e05a9eb-c901-42ca-b1ab-e3abaf6fe57d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION Calculate_Set_Point_Normal_Conditions : stCMD_SET
+VAR_INPUT
+END_VAR
+VAR
+	max_kw_change_3s: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[max_kw_change_3s := (GVL.power_plant.ramp_limit / (60 / GVL.power_plant.sample_time));
+
+IF GVL.battery.soc > GVL.battery.max_tolerable_soc OR (*PowerPlant.ReachingSetPoint*) GVL.battery.soc > GVL.battery.soc_to_remove_sp THEN
+	
+	IF GVL.VIRTUAL_POI_METER.active_power_prod + max_kw_change_3s < GVL.VIRTUAL_METER.active_power_prod OR (*PowerPlant.ReachingSetPoint AND*) GVL.battery.soc > GVL.battery.soc_to_remove_sp THEN
+		
+		Calculate_Set_Point_Normal_Conditions := GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power - GVL.power_plant.safety_margin;
+		//PowerPlant.ReachingSetPoint := TRUE;
+		
+	ELSE 
+		
+		Calculate_Set_Point_Normal_Conditions := -1; 
+		RETURN;
+		
+	END_IF
+ELSE
+	
+	//PowerPlant.ReachingSetPoint := FALSE;
+	IF GVL.VIRTUAL_METER.active_power_sp <> 1 THEN
+		
+		Calculate_Set_Point_Normal_Conditions := 1;
+		
+	ELSE
+ 
+		Calculate_Set_Point_Normal_Conditions := -2;
+	
+	END_IF
+	
+END_IF
+RETURN;
+]]></ST>
+    </Implementation>
+    <LineIds Name="Calculate_Set_Point_Normal_Conditions">
+      <LineId Id="70" Count="29" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

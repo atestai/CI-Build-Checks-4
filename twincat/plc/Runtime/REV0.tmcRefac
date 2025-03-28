@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Refactors>
+  <Renames>
+    <RenamedType>
+      <Type guid="8815fa26-289e-4ac7-8a77-e9b82929afe0">EMODBUSDATALENGTH</Type>
+      <From>eModbusDataLength</From>
+      <To>eModbusDataType</To>
+    </RenamedType>
+  </Renames>
+</Refactors>

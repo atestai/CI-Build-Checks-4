@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stINVERTER" Id="{61e2af7e-48b3-458d-a6f6-576ce156b663}">
+    <Declaration><![CDATA[TYPE stINVERTER :
+STRUCT
+	/// INVERTER STATUS
+	health: UINT;	// 1 = health, 0 = fault
+	
+	/// ACTIVE POWER ///
+	current_sp: REAL;
+	target_prod: REAL; 
+	active_pwr_nominal_pwr: REAL;
+	sp_mem: REAL;
+	sp_mem_q: REAL;
+	
+	/// REACTIVE POWER /// 
+	current_sp_q: REAL;
+	reactive_pwr_nominal_pwr: REAL;
+	
+	/// MODBUS COMM
+	tcp_port: UINT;
+	unit_id: BYTE;
+	server_ip_addr: STRING(255);
+	n_quantity_act_pwr: WORD;
+	mb_addr_act_pwr: WORD;
+	n_quantity_react_pwr: WORD;
+	mb_addr_react_pwr: WORD;
+	mb_h_addr: WORD;
+	health_quantity: WORD;
+	
+	read_done: BOOL := FALSE;
+	read_state: UINT := 0;
+	
+	write_done: BOOL := TRUE;
+	write_state: UINT := 0;
+	
+	wBusy_actp: BOOL;
+	wBusy_reactp: BOOL;
+	
+	comm_state: UINT;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

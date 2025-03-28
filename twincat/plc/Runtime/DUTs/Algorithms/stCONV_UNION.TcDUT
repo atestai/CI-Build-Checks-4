@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stCONV_UNION" Id="{09023997-8964-407e-b6a7-4f0aeb70ab29}">
+    <Declaration><![CDATA[TYPE stCONV_UNION :
+UNION
+	prod_real: REAL;
+	prod_w: ARRAY[1..2] of WORD;
+END_UNION
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

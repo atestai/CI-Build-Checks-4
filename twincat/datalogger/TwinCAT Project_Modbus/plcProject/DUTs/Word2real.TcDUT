@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="Word2real" Id="{bb2ad1e0-9df6-4027-9810-e6899f62c29b}">
+    <Declaration><![CDATA[TYPE Word2real :
+UNION
+	var1 : ARRAY [1..2] OF WORD;	//Be carefull of position, var[1] is LSB, var[2]MSB
+	var2 : REAL;
+	var3: ARRAY[1..4] OF BYTE;
+END_UNION
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

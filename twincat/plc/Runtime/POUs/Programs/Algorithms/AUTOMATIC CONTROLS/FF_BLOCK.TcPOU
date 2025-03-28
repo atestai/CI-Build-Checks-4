@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FF_BLOCK" Id="{cf0c61b7-5dac-4ee3-9cb6-99bf0ae70e1d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION FF_BLOCK : REAL
+VAR_INPUT
+	input_value: REAL;
+	k_ff: REAL;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FF_BLOCK := input_value * (1 + k_ff);]]></ST>
+    </Implementation>
+    <LineIds Name="FF_BLOCK">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+node_modules/
+Projects/
+
+*.log
+*.xlxs
+.env
+start.sh
+
+gui.tgz
+test/
+
+.vscode/
+
+historical_download
+

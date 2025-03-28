@@ -1,0 +1,219 @@
+html, body {  
+  background-color: white !important;
+}
+
+
+body{
+  font-family: "Roboto", sans-serif;
+  font-style: normal;
+  background-color: white;
+  scrollbar-width: thin; /* Imposta la larghezza della scrollbar su "thin" */
+
+}
+
+.MuiBox-root{
+  background: white;
+}
+
+
+#root{
+  background-color: black;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.modalOuter {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.modalBox {
+  width: 30%;
+  margin: 0 auto;
+  padding: 2em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 20px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+}
+
+.heading,
+.drag {
+  font-weight: 600;
+  color: #191442;
+}
+
+.drag {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  cursor: pointer;
+}
+
+.drag .browse {
+  display: inline-block;
+  color: #fe8d57;
+}
+
+.file-label {
+  cursor: pointer;
+}
+
+.instruction,
+.info {
+  color: #6f6c78;
+}
+
+.heading {
+  font-size: 25px;
+}
+
+.instruction {
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+  font-size: 14px;
+}
+
+.drag {
+  font-size: 18px;
+}
+
+.info {
+  font-size: 12px;
+}
+
+.btn-container {
+  display: flex;
+  border: solid 0.1px;
+  border-radius: 5px;
+}
+
+.uploadBox,
+.signBox {
+  padding: 2em;
+  border: 2px dashed #7866e3;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Tab Container */
+
+.Tabs {
+  width: 100%;
+  height: auto;
+  min-height: 300px;
+  border-radius: 2rem;
+}
+
+/* Tab Navigation */
+
+ul.nav {
+  width: 80%;
+  margin: 0 auto 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #d9d4f3;
+  border-radius: 0.5rem;
+}
+
+ul.nav li {
+  width: 50%;
+  padding: 0.5rem 2em;
+  list-style: none;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-radius: 0.5em;
+  color: #191442;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+ul.nav li.active {
+  background: #191442;
+  color: #fff;
+}
+
+/* First and Second Tab Styles */
+
+.upload-icon {
+  font-size: 2em;
+  color: #7866e3;
+}
+
+.fileIcon {
+  display: none;
+}
+
+.filename {
+  font-size: 12px;
+}
+
+.custom-textarea {
+  resize: none;
+  border: 1px solid #BDBDBD; /* Colore del bordo di default */
+  border-radius: 4px;
+  padding: 8px;
+  transition: border-color 0.2s ease-in-out;
+  outline: none; /* Rimuove il bordo blu di default */
+}
+
+/* Quando il mouse passa sopra il textarea */
+.custom-textarea:hover {
+  border-color: green; /* Colore del bordo in hover */
+}
+
+/* Quando il textarea è in focus */
+.custom-textarea:focus {
+  border-color: blue; /* Colore del bordo in focus */
+}

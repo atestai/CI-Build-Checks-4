@@ -1,0 +1,31 @@
+name: JavaScript Compilation
+
+on: pull_request
+
+jobs:
+  compile-js:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x]
+        # node-version: [16.x, 18.x, 20.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        working-directory: datalogger-backend  # Sostituisci con la cartella corretta
+        run: npm install --legacy-peer-deps
+
+      - name: Compile JavaScript files
+        working-directory: datalogger-backend  # Sostituisci con la cartella corretta
+        env:
+          CI: false  # Se vuoi evitare che warning blocchino la compilazione
+        run: npm run compile -- --verbose

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js; nodemon api.js, nodemon  manager.js",
-    "compile": "babel  {src,*.js} --out-dir dist --copy-files"
+    "compile": "babel {src,*.js} --out-dir dist --copy-files"
   },
   "author": "",
   "license": "ISC",

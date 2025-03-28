@@ -20,7 +20,7 @@ import { Link } from 'react-router-dom';
 
 export default function AccountMenu(props) {
 
-    const { user } = props; //test
+    const { user } = props;
 
 
 

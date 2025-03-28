@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Main_Algorithm" Id="{806268a4-dde8-408d-934c-2136314cd117}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Main_Algorithm
+VAR
+	module_executer: ARRAY[1..GVL_MODULES.n_modules] OF FB_Module_Executor;
+	setup_inverter_comm: FB_Comm_Setup;
+	setup_meter_comm: FB_Setup_Meter_Comm;
+	i: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MAIN_1();
+//MAIN_2();]]></ST>
+    </Implementation>
+    <Method Name="MAIN_1" Id="{bbcb920d-026a-4ea4-947e-2d8382fb6e38}">
+      <Declaration><![CDATA[METHOD MAIN_1 : BOOL
+VAR_INPUT
+END_VAR
+VAR
+	//load_from_db: LOAD_FROM_DB_FB;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF GVL.WISNAM_PPC.START THEN			/// setup del simulatore ///
+	setup_inverter_comm();
+	setup_meter_comm();
+	GVL.WISNAM_PPC.START := FALSE;
+END_IF
+
+
+module_executer[1](input := GVL_modules.read_meter);
+module_executer[3](input := GVL_MODULES.acquire_setpoint_mqtt);
+module_executer[4](input := GVL_modules.active_power_ctrl);
+module_executer[5](input := GVL_modules.reactive_power_ctrl);
+//IF NOT GVL_Freq.frequency_regulation_priority OR NOT GVL.WISNAM_PPC.actp_freq_reg_enabled THEN
+//	module_executer[6](input := GVL_modules.command_dispatcher);
+//END_IF
+// load_from_db();
+// test]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MAIN_2" Id="{9b3eb3c2-1e38-4d35-810f-949f998f5302}">
+      <Declaration><![CDATA[METHOD MAIN_2 : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF GVL.WISNAM_PPC.START THEN			/// setup del simulatore ///
+	setup_inverter_comm();
+	setup_meter_comm();
+	GVL.WISNAM_PPC.START := FALSE;
+END_IF
+
+
+module_executer[1](input := GVL_modules.read_meter);
+Update_Virtual_Meter();
+module_executer[3](input := GVL_MODULES.acquire_setpoint_mqtt);
+module_executer[4](input := GVL_modules.load_following);
+module_executer[5](input := GVL_modules.reactive_power_ctrl);
+module_executer[6](input := GVL_modules.command_dispatcher);
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MAIN_WIND_BESS" Id="{64f642b9-5327-4a67-9e64-752feb21fc07}">
+      <Declaration><![CDATA[METHOD MAIN_WIND_BESS : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[/// per tutte le funzioni "derivate" dal progetto originale Cosmo Eco, la potenza è espressa in termini assoluti e poi normalizzata qui ///
+/// TO DO: valutare se mantenere questo approccio ///
+
+/// Ciascuna delle funzioni richiamate restituisce variabili di tipo COMMAND SET (CMD_SET) 
+/// TO DO: definire (lato progettazione) come devono essere ripartiti questi comandi e da quali moduli
+/// Tutti questi moduli devono essere ridisegnati in fase di progettazione per l'interfacciamento con un sistema reale
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Main_Algorithm">
+      <LineId Id="1156" Count="0" />
+      <LineId Id="491" Count="0" />
+    </LineIds>
+    <LineIds Name="Main_Algorithm.MAIN_1">
+      <LineId Id="6" Count="7" />
+      <LineId Id="15" Count="2" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="30" Count="0" />
+    </LineIds>
+    <LineIds Name="Main_Algorithm.MAIN_2">
+      <LineId Id="6" Count="8" />
+      <LineId Id="16" Count="4" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Main_Algorithm.MAIN_WIND_BESS">
+      <LineId Id="9" Count="1" />
+      <LineId Id="12" Count="2" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="15" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

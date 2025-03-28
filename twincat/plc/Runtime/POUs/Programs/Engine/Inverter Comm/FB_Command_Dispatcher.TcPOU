@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Command_Dispatcher" Id="{13ac5690-8ddb-479d-8838-f1c583dfd942}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Command_Dispatcher
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	check_inverter_health: FB_MBReadRegs;
+	aux_union: stCONV_UNION;
+	aux_union_q: stCONV_UNION;
+	fb_write_holding_actp: FB_MBWriteRegs;
+	fb_write_holding_reactp: FB_MBWriteRegs;
+	comm_state: UINT;
+	index: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE comm_state OF
+
+	0:
+		index := 1;
+		comm_state := 1;
+		GVL.healthy_inv := 0;
+
+	1:
+		check_inverter_health(
+			sIPAddr:= GVL.server_addr, 
+			nTCPPort:= GVL.inv[index].tcp_port, 
+			nUnitID:= GVL.inv[index].unit_id, 
+			nQuantity:= GVL.inv[index].health_quantity, 
+			nMBAddr:= GVL.inv[index].mb_h_addr, 
+			cbLength:= SIZEOF(GVL.inv[index].health), 
+			pDestAddr:= ADR(GVL.inv[index].health), 
+			bExecute:= TRUE, 
+			tTimeout:= T#2S, 
+			bBusy=> , 
+			bError=> , 
+			nErrId=> , 
+			cbRead=> 
+		);
+		comm_state := 2;
+
+	2:
+		check_inverter_health(bExecute := FALSE);
+		IF NOT check_inverter_health.bBusy THEN
+			IF check_inverter_health.bError THEN
+				GVL.inv[index].health := 0;
+			END_IF
+			comm_state := 3;
+		END_IF
+
+	3:
+		GVL.healthy_inv := GVL.healthy_inv + GVL.inv[index].health;
+		index := index + 1;
+		
+		IF index > GVL.n_slave THEN
+			index := 1;
+			comm_state := 4;
+		ELSE
+			comm_state := 1;
+		END_IF
+
+	4:
+		IF (GVL.WISNAM_PPC.active_power_ctrl_enabled) AND GVL.healthy_inv <> 0 AND GVL.inv[index].health = 1 THEN
+			GVL.inv[index].current_sp := ((GVL_Act_Pwr.setpoint_to_send * GVL.power_plant.nominal_power)/UINT_TO_REAL(GVL.healthy_inv))/GVL.inv[index].active_pwr_nominal_pwr;
+			GVL.inv[index].current_sp := MIN(1, MAX(GVL.inv[index].current_sp,0));
+			IF GVL.inv[index].sp_mem <> GVL.inv[index].current_sp THEN
+				
+				aux_union.prod_real := GVL.inv[index].current_sp;
+				fb_write_holding_actp(
+					sIPAddr:= GVL.server_addr, 
+					nTCPPort:= GVL.inv[index].tcp_port, 
+					nUnitID:= GVL.inv[index].unit_id, 
+					nQuantity:= GVL.inv[index].n_quantity_act_pwr, 
+					nMBAddr:= GVL.inv[index].mb_addr_act_pwr, 
+					cbLength:= SIZEOF(DWORD), 
+					pSrcAddr:= ADR(aux_union.prod_w), 
+					bExecute:= TRUE, 
+					tTimeout:= T#3S, 
+					bBusy=> , 
+					bError=> , 
+					nErrId=>
+				);
+				GVL.inv[index].sp_mem := GVL.inv[index].current_sp;
+				
+			END_IF
+			
+		END_IF
+		
+		IF (GVL.WISNAM_PPC.reactive_power_ctrl_enabled) AND GVL.healthy_inv <> 0 AND GVL.inv[index].health = 1 THEN
+			GVL.inv[index].current_sp_q := ((GVL_React_Pwr.setpoint_to_send * GVL.power_plant.nominal_power) / UINT_TO_REAL(GVL.healthy_inv))/GVL.inv[index].active_pwr_nominal_pwr;
+			GVL.inv[index].current_sp_q := MIN(1, MAX(GVL.inv[index].current_sp_q,0));
+			IF GVL.inv[index].sp_mem_q <> GVL.inv[index].current_sp_q THEN
+				
+				aux_union_q.prod_real := GVL.inv[index].current_sp_q;
+				fb_write_holding_reactp(
+					sIPAddr:= GVL.server_addr, 
+					nTCPPort:= GVL.inv[index].tcp_port, 
+					nUnitID:= GVL.inv[index].unit_id, 
+					nQuantity:= GVL.inv[index].n_quantity_react_pwr, 
+					nMBAddr:= GVL.inv[index].mb_addr_react_pwr, 
+					cbLength:= SIZEOF(DWORD), 
+					pSrcAddr:= ADR(aux_union_q.prod_w), 
+					bExecute:= TRUE, 
+					tTimeout:= T#3S, 
+					bBusy=> , 
+					bError=> , 
+					nErrId=>
+				);
+				GVL.inv[index].sp_mem_q := GVL.inv[index].current_sp_q;
+				
+			END_IF
+			
+		END_IF
+		// TO DO: valutare se realizzare due stati separati per le due scritture
+		comm_state := 5;
+
+	5:
+		fb_write_holding_actp(bExecute := FALSE);
+		fb_write_holding_reactp(bExecute := FALSE);
+		IF NOT fb_write_holding_actp.bBusy AND NOT fb_write_holding_reactp.bBusy THEN
+			comm_state := 6; 
+		END_IF
+
+	6:
+		index := index + 1;
+		IF index > GVL.n_slave THEN
+			comm_state := 0;
+		ELSE
+			comm_state := 4;
+		END_IF
+
+END_CASE
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Command_Dispatcher">
+      <LineId Id="1" Count="117" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

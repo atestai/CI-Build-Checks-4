@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <DUT Name="DEVICE" Id="{1fc7778b-74b2-4301-9b60-2306bc5c069f}">
+    <Declaration><![CDATA[TYPE DEVICE :
+STRUCT
+	//CONFIGURATION PARAMETER FB READ
+	ID: STRING(15);
+	ServerIP: STRING(15);
+	ServerNumPort: UINT;
+	ServerReadUnitID: BYTE;
+	
+	//ReadBusy: BOOL;
+	//ReadError: BOOL;
+	
+	//INVERTER VALUE WRITE
+	
+	//ServerWriteUnitID: BYTE;
+	//ReactivePowerSetPoint :INT;
+	//ActivePowerSetPoint : INT;
+	//PowerFactorSetPoint :INT;
+	//PowerFactorExcitationType : DINT;
+	
+	
+	readTimestamp : UDINT; 
+	readParameterCounter : INT := 0;
+	readParameter : ARRAY[1..GVL.MAX_READ_PARAMETER] OF READ_PAR;
+	
+	CheckComm: UDINT;
+	
+	//writeParameter : ARRAY[1..GVL.MAX_READ_PARAMETER] OF WRITE_PAR;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

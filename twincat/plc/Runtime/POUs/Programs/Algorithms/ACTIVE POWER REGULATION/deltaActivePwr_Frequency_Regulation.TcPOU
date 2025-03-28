@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="deltaActivePwr_Frequency_Regulation" Id="{fe8a94ed-7e96-4323-b071-1538ca648f70}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION deltaActivePwr_Frequency_Regulation : REAL
+VAR_INPUT
+	p_nd: REAL;
+	current_frequency: REAL;
+	current_power: REAL;
+	//pe_selector: INT;
+END_VAR
+VAR
+	A: stPF_POINT;
+	B1: stPF_POINT;
+	B2: stPF_POINT;
+	DB1: stPF_POINT;
+	DB2: stPF_POINT;
+	C: stPF_POINT;
+	
+	p_fn: REAL;
+	t: REAL;
+	M_LSMO: REAL;
+	M_LSMU: REAL;
+	pu: REAL;
+	max_input: REAL;
+	pe: REAL;
+	
+	B_FSMU: REAL;
+	B_FSMO: REAL;
+	ActivePwr_Frequency_Regulation: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//B_FSMU := p_nd * GVL_Freq.K_FSMU; // %
+//B_FSMO := p_nd * GVL_Freq.K_FSMO; // %
+
+//p_fn := GVL_Act_Pwr.setpoint;
+//M_LSMO := p_fn - B_FSMO;
+//pu := p_fn + B_FSMU;
+
+//IF pe_selector = 0 THEN
+//	pe := p_nd;
+//ELSE 
+//	pe := 0;
+//END_IF
+
+//M_LSMU := MAX(0, pe - pu);
+
+///// define coordinates ///
+//A.frequency := 49.5;
+//A.active_power := M_LSMU + p_fn; // = Pfn + Mu
+
+//B1.frequency := 49.8;
+//B1.active_power := p_fn + B_FSMU; // = Pfn + Bfsm_u
+
+//DB1.frequency := 49.980;
+//DB1.active_power := p_fn; // = Pfn
+
+//DB2.frequency := 50.020;
+//DB2.active_power := p_fn; // = Pfn
+
+//B2.frequency := 50.2;
+//B2.active_power := p_fn - B_FSMO; // = Pfn - Bfsm_o
+
+//C.frequency := 51.5;
+//C.active_power := 0;
+
+
+////A.frequency := 49.5;
+////A.active_power := M_LSMU + p_fn; // = Pfn + Mu
+
+////B1.frequency := -0.2;
+////B1.active_power := 0.5; // = Pfn + Bfsm_u
+
+////DB1.frequency := -0.15;
+////DB1.active_power := 0; // = Pfn
+
+////DB2.frequency := 0.15;
+////DB2.active_power := 0; // = Pfn
+
+////B2.frequency := 0.2;
+////B2.active_power := -0.5; // = Pfn - Bfsm_o
+
+////C.frequency := 51.5;
+////C.active_power := 0;
+////////////////////////////
+
+//IF NOT (current_frequency < DB2.frequency AND current_frequency > DB1.frequency) THEN
+	
+//	/// SEGMENTO DB2 - B2 ////
+//	IF (current_frequency >= DB2.frequency AND current_frequency <= B2.frequency) THEN
+//		t := (current_frequency - DB2.frequency) / (B2.frequency - DB2.frequency);
+//		ActivePwr_Frequency_Regulation := t*B2.active_power + (1-t)*DB2.active_power;
+	
+	
+//	/// SEGMENTO B2 - C ///
+//	ELSIF (current_frequency > B2.frequency AND current_frequency <= C.frequency) THEN
+//		t := (current_frequency - B2.frequency) / (C.frequency - B2.frequency);
+//		ActivePwr_Frequency_Regulation := t*C.active_power + (1-t)*B2.active_power;
+		
+	
+//	/// Caso limite C ///
+//	ELSIF current_frequency > C.frequency THEN
+//		ActivePwr_Frequency_Regulation := 0;
+		
+	
+//	/// SEGMENTO B1 - DB1 ///
+//	ELSIF (current_frequency >= B1.frequency AND current_frequency <= DB1.frequency) THEN
+//		t := (current_frequency - B1.frequency) / (DB1.frequency - B1.frequency);
+//		ActivePwr_Frequency_Regulation := t*DB1.active_power + (1-t)*B1.active_power;
+
+	
+//	/// SEGMENTO A - B1 ///
+//	ELSIF (current_frequency >= A.frequency AND current_frequency <= B1.frequency) THEN
+//		t := (current_frequency - A.frequency) / (B1.frequency - A.frequency);
+//		ActivePwr_Frequency_Regulation := t*B1.active_power + (1-t)*A.active_power;
+
+	
+//	/// Caso limite A ///
+//	ELSIF current_frequency < A.frequency THEN
+//		/// aggiornare il valore di compensazione  
+	
+//	END_IF
+	
+//	deltaActivePwr_Frequency_Regulation := ActivePwr_Frequency_Regulation - GVL_Act_Pwr.setpoint;
+	
+//ELSE
+//	deltaActivePwr_Frequency_Regulation := 0;
+//END_IF
+
+//IF deltaActivePwr_Frequency_Regulation > GVL_Freq.out_limiter_max THEN
+//	deltaActivePwr_Frequency_Regulation := GVL_Freq.out_limiter_max;
+//ELSIF deltaActivePwr_Frequency_Regulation < GVL_Freq.out_limiter_min THEN
+//	deltaActivePwr_Frequency_Regulation := GVL_Freq.out_limiter_min;
+//END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="deltaActivePwr_Frequency_Regulation">
+      <LineId Id="122" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="110" Count="1" />
+      <LineId Id="113" Count="1" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="116" Count="1" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="159" Count="16" />
+      <LineId Id="229" Count="17" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="176" Count="7" />
+      <LineId Id="185" Count="6" />
+      <LineId Id="193" Count="4" />
+      <LineId Id="199" Count="4" />
+      <LineId Id="205" Count="5" />
+      <LineId Id="212" Count="4" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="37" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

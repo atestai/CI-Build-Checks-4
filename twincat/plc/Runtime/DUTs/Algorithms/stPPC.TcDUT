@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stPPC" Id="{4e5cfae8-c0be-42bd-96b4-59dd91c88cbe}">
+    <Declaration><![CDATA[TYPE stPPC :
+STRUCT
+	
+	START: BOOL := TRUE;	
+	MANUAL_MODE: BOOL;  /// FIELD OPERATOR ///
+	AUTO_MODE: BOOL;	/// CONTROL ROOM ///
+	REMOTE_MODE: BOOL := TRUE;	/// TSO via MQTT///
+	
+	actp_freq_reg_enabled: BOOL := FALSE;
+	active_power_ctrl_enabled: BOOL := TRUE;
+	reactive_power_ctrl_enabled: BOOL := TRUE;
+	qv_ctrl_enabled: BOOL := TRUE;
+	power_factor_ctrl_enabled: BOOL := FALSE;
+	load_following_enabled: BOOL := FALSE;
+	
+	timeslot: stTIMESLOT;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

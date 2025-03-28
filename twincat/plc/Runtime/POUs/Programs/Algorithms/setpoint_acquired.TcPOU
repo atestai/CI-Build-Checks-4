@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="setpoint_acquired" Id="{03ef561a-51ef-41f8-a15d-12e03fffd357}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION setpoint_acquired : REAL
+VAR_INPUT
+	message_received: STRING(255);
+END_VAR
+VAR
+	aux_string_array: ARRAY[1..GVL.max_message_info] OF STRING(255);
+	split_mqtt_message: BOOL;
+	j: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[aux_string_array[1] := message_received;
+FOR j := 1 TO GVL.max_message_info - 1 DO
+	split_mqtt_message := FindAndSPlitChar(
+										sSeparatorChar := ':',
+										pSrcString := ADR(aux_string_array[j]),
+										pLeftString := ADR(aux_string_array[j]),
+										nLeftSize := SIZEOF(aux_string_array[j]),
+										pRightString := ADR(aux_string_array[j + 1]), 
+										nRightSize := SIZEOF(aux_string_array[j + 1]),
+										bSearchFromRight := FALSE
+										);
+END_FOR
+setpoint_acquired := STRING_TO_REAL(aux_string_array[2]);]]></ST>
+    </Implementation>
+    <LineIds Name="setpoint_acquired">
+      <LineId Id="12" Count="0" />
+      <LineId Id="14" Count="9" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="24" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

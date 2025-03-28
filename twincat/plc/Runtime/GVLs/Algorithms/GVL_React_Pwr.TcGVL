@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <GVL Name="GVL_React_Pwr" Id="{63582d0c-a539-4fff-ab08-0ac080993cc3}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	n_points: UINT;
+END_VAR
+
+VAR_GLOBAL
+	/// REACTIVE POWER REGULATION /// 
+	setpoint: REAL;
+	total_sp: REAL;
+	target_prod: REAL;
+	expected_pod_prod_q: REAL;
+	setpoint_mem: REAL;
+	reactive_pwr_ctrl_case: UINT := 1;
+	setpoint_ff: REAL;
+	filtered_setpoint: REAL;
+	low_pass_filter_mem_q: REAL;
+	update_pi_sp_q: FB_PI_Setpoint;
+	pi_correction_q: REAL;
+	ff_pi_q_control_enable: BOOL;
+	setpoint_to_send: REAL;
+	setpoint_alpha: REAL := 0.2;
+	sp_tolerance_q: REAL := 0.002;
+	
+	setpoint_manual: REAL;
+	setpoint_auto: REAL;
+	setpoint_tso: REAL;
+	p_nd: REAL;
+	
+	max_q_pf_regulation: REAL;
+	
+	power_factor_target: REAL := 1.0;
+	//enhanced_points: ARRAY [1..n_points, 1..2] OF REAL := [[-0.35, 0], [0, 1.1], [0.35, 1.05], [0, 0.9]];
+	voltage_hyst_enable: BOOL;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

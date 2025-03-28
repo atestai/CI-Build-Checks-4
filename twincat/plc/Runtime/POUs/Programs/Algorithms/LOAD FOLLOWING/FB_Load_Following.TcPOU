@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Load_Following" Id="{99fe7c10-9c3c-44bf-b33b-9a1c48ebbc4b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Load_Following
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	i: UINT;
+	error_perc: REAL;
+	delta: REAL; 
+	reach_sp: FB_Reach_SP_ActP;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//  TO DO: valutare se, nel caso della potenza erogata dalla rete, conviene esprimere la potenza in termini percentuali rispetto alla potenza di rete
+error_perc := ((GVL.VIRTUAL_POI_METER.active_power_prod - GVL_Load_Following.power_grid_max) / GVL_Load_Following.power_grid_max) * 100;
+
+IF GVL.VIRTUAL_POI_METER.active_power_prod <= GVL_Load_Following.power_grid_min THEN
+	
+	delta := 0;
+	GVL_Act_Pwr.total_sp := 0;
+
+ELSIF (GVL.VIRTUAL_POI_METER.active_power_prod >= GVL_Load_Following.power_grid_min) AND (GVL.VIRTUAL_POI_METER.active_power_prod <= GVL_Load_Following.power_grid_max) THEN 
+	
+	delta := -1 *GVL_Load_Following.delta_fast;
+
+ELSE
+
+	delta := GVL_Load_Following.delta_fast;	
+
+END_IF
+
+
+IF (error_perc > 10) AND (error_perc < GVL_Load_Following.max_error_perc) THEN
+	
+	delta := GVL_Load_Following.delta_slow;
+
+END_IF
+
+
+IF error_perc < 10 THEN
+	
+	delta := 0;
+
+END_IF
+
+// TO DO: verificare se questa formula è corretta
+GVL_Act_Pwr.total_sp := GVL_Act_Pwr.total_sp + delta * 0.100;   // + delta * dT con dT = tempo di esecuzione del main, pari a 100ms	
+GVL_Act_Pwr.total_sp := MAX(0, MIN(1, GVL_Act_Pwr.total_sp)); 
+
+reach_sp(sp_target_actp := GVL_Act_Pwr.total_sp);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Load_Following">
+      <LineId Id="37" Count="0" />
+      <LineId Id="69" Count="2" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="76" Count="2" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="116" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

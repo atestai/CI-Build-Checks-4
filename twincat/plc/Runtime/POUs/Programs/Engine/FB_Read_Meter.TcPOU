@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Read_Meter" Id="{e2ab9ad5-c82a-4f63-84e1-4c1d8d87a49f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Read_Meter
+VAR_INPUT
+	tcp_port: UINT;
+	nUnitID: BYTE;
+	nQuantity_Act_Pwr: WORD;
+	nMBAddr_Act_Pwr: WORD;
+	nQuantity_React_Pwr: WORD;
+	nMBAddr_React_Pwr: WORD;
+	i: UINT;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	/// MODBUS ///
+	timer_read: TON;
+	bBusy: BOOL;
+	bError: BOOL;
+	nErrID: UDINT;
+	
+	/// ACTIVE POWER ///
+	aux_arr_active_pwr: ARRAY[1..4] OF WORD;
+	convert_meter_active_pwr: stCONV_UNION;
+	convert_meter_freq: stCONV_UNION;
+	read_meter_prod_active_pwr: FB_MBReadRegs;
+	
+	/// REACTIVE POWER ///
+	read_meter_prod_reactive_pwr: FB_MBReadRegs;
+	aux_arr_reactive_pwr: ARRAY[1..4] OF WORD;
+	convert_meter_reactive_pwr: stCONV_UNION;
+	convert_meter_voltage: stCONV_UNION;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[timer_read(IN := NOT timer_read.Q, PT := T#70MS, Q =>);
+IF GVL.WISNAM_PPC.active_power_ctrl_enabled THEN
+	
+	read_meter_prod_active_pwr(
+			sIPAddr:= GVL.server_addr, 
+			nTCPPort:= tcp_port, 
+			nUnitID:= nUnitID, 
+			nQuantity:= nQuantity_Act_Pwr, 
+			nMBAddr:= nMBAddr_Act_Pwr, 
+			cbLength:= SIZEOF(aux_arr_active_pwr), 
+			pDestAddr:= ADR(aux_arr_active_pwr), 
+			bExecute:= timer_read.Q, 
+			tTimeout:= T#3S, // TO DO parametrizza timeout lettura scrittera
+			bBusy=> bBusy, 
+			bError=> bError, 
+			nErrId=> nErrID, 
+			cbRead=> 
+			);	
+			
+	convert_meter_active_pwr.prod_w[2] := aux_arr_active_pwr[1];
+	convert_meter_active_pwr.prod_w[1] := aux_arr_active_pwr[2];
+	GVL.meter_arr[i].active_power_prod := convert_meter_active_pwr.prod_real;
+	GVL.meter_arr[i].active_power_sp := GVL.meter_arr[1].active_power_prod/GVL.power_plant.nominal_power;
+	
+	convert_meter_freq.prod_w[2] := aux_arr_active_pwr[3];
+	convert_meter_freq.prod_w[1] := aux_arr_active_pwr[4];
+	GVL.meter_arr[i].frequency := convert_meter_freq.prod_real;
+	
+END_IF
+
+// TO DO: in generale, separa le letture di potenza attiva / frequenza e potenza reattiva / tensione
+
+IF GVL.WISNAM_PPC.reactive_power_ctrl_enabled THEN
+	
+	read_meter_prod_reactive_pwr(
+			sIPAddr:= GVL.server_addr, 
+			nTCPPort:= tcp_port, 
+			nUnitID:= nUnitID, 
+			nQuantity:= nQuantity_React_Pwr, 
+			nMBAddr:= nMBAddr_React_Pwr, 
+			cbLength:= SIZEOF(aux_arr_reactive_pwr), 
+			pDestAddr:= ADR(aux_arr_reactive_pwr), 
+			bExecute:= timer_read.Q, 
+			tTimeout:= T#3S, 
+			bBusy=> bBusy, 
+			bError=> bError, 
+			nErrId=> nErrID, 
+			cbRead=> 
+			);	
+	
+	convert_meter_reactive_pwr.prod_w[2] := aux_arr_reactive_pwr[1];
+	convert_meter_reactive_pwr.prod_w[1] := aux_arr_reactive_pwr[2];
+	GVL.meter_arr[i].reactive_power_prod := convert_meter_reactive_pwr.prod_real;
+	GVL.meter_arr[i].reactive_power_sp := GVL.meter_arr[1].reactive_power_prod/GVL.power_plant.nominal_power;
+	
+	convert_meter_voltage.prod_w[2] := aux_arr_reactive_pwr[3];
+	convert_meter_voltage.prod_w[1] := aux_arr_reactive_pwr[4];
+	GVL.meter_arr[i].measured_voltage := convert_meter_voltage.prod_real;
+	
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Read_Meter">
+      <LineId Id="1" Count="60" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

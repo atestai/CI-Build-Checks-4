@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Setup_Meter_Comm" Id="{1de2b9aa-0a50-4ce0-b5ff-129087d577ff}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Setup_Meter_Comm
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	 i: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR i:= 1 TO GVL.n_meter DO
+	GVL.meter_arr[i].tcp_port := 9501 - (i - 1);
+	GVL.meter_arr[i].unit_id := 1;
+	
+	GVL.meter_arr[i].nQuantity_Act_Pwr := 4;
+	GVL.meter_arr[i].nMBAddr_Act_Pwr := 0;
+	
+	GVL.meter_arr[i].nQuantity_React_Pwr := 4;
+	GVL.meter_arr[i].nMBAddr_React_Pwr := 4;
+END_FOR
+
+GVL.meter_arr[1].pos := stGRID_POS.pu;
+GVL.meter_arr[2].pos := stGRID_POS.poi;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Setup_Meter_Comm">
+      <LineId Id="1" Count="12" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

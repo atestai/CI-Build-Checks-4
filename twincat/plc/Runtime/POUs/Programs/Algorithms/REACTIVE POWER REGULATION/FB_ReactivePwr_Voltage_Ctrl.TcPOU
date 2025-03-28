@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_ReactivePwr_Voltage_Ctrl" Id="{99b6c314-cc59-4d0d-8a3c-091cff540d0e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ReactivePwr_Voltage_Ctrl
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	fbCTRL_PI: FB_CTRL_PI;
+	stCTRL_PI_PARAMS: ST_CTRL_PI_PARAMS;
+	eMode: E_CTRL_MODE;
+	bInit: BOOL := TRUE;
+	fbTON: TON;
+	hysteresis_block: FB_Hysteresis;
+	map_QV: FB_Map_QV;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bInit THEN
+	(* init parameter struct *)
+	stCTRL_PI_PARAMS.tCtrlCycleTime		:= T#50MS;
+	stCTRL_PI_PARAMS.tTaskCycleTime		:= T#10MS;
+	stCTRL_PI_PARAMS.tTn				:= T#2000MS;		(* integral gain Tn				*)
+	stCTRL_PI_PARAMS.fKp				:= 0.04;			(* proportional gain Kp				*)
+	stCTRL_PI_PARAMS.fOutMaxLimit		:= GVL_Voltage.pi_ctrl_max_output;  		(* maximum output limit				*)
+	stCTRL_PI_PARAMS.fOutMinLimit		:= GVL_Voltage.pi_ctrl_min_output;			(* minimum output limit				*)
+
+	(* set the mode to ACTIVE --> normal operation *)
+	eMode := eCTRL_MODE_ACTIVE;
+
+	(* reset the init flag *)
+	bInit := FALSE;
+END_IF
+
+
+fbCTRL_PI(
+	fSetpointValue:= 0, 
+	fActualValue:= GVL_Voltage.norm_error, 
+	fManSyncValue:= , 
+	bSync:= , 
+	eMode:= eMode, 
+	bHold:= , 
+	fOut=> GVL_Voltage.output_pi, 
+	bARWactive=> , 
+	eState=> , 
+	eErrorId=> , 
+	bError=> , 
+	stParams:= stCTRL_PI_PARAMS
+	);
+
+/// TO DO: dopo che avremo definito gli schemi di controllo, mettere i PID in una FB separata.
+	
+/// REGULATOR LIMITER /////////////////////////////////////////////////////// 
+//IF GVL_Voltage.output_pi > GVL_Voltage.max_norm_correction THEN
+//	GVL_Voltage.output_pi := GVL_Voltage.max_pi_correction;
+//ELSIF GVL_Voltage.output_pi < GVL_Voltage.min_pi_correction THEN
+//	GVL_Voltage.output_pi := GVL_Voltage.min_norm_correction;
+//END_IF
+/////////////////////////////////////////////////////////////////////////////
+
+/// HYSTERESIS ////////////////////////////////////////////////////////////// 
+hysteresis_block();
+/////////////////////////////////////////////////////////////////////////////
+
+/// Q/V MAP /////////////////////////////////////////////////////////////////
+map_QV();
+/////////////////////////////////////////////////////////////////////////////
+
+//GVL_Voltage.output_qv_regulation := deltaReactivePwr_Voltage_Regulation(input := GVL_Voltage.output_qv_regulation);
+
+GVL_Voltage.output_qv_regulation := GVL_Voltage.output_qv_regulation * GVL_React_Pwr.p_nd;
+
+/// LIMITATORE GLOBALE DEL REGOLATORE ///////////////////////////////////////
+IF GVL_Voltage.output_qv_regulation > 0.3 THEN	// TO DO: assicurati che questi dati siano giusti 
+	GVL_Voltage.output_qv_regulation := 0.3;
+ELSIF GVL_Voltage.output_qv_regulation < -0.35 THEN
+	GVL_Voltage.output_qv_regulation := -0.35;
+END_IF
+///////////////////////////////////////////////////////////////////////////// ]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ReactivePwr_Voltage_Ctrl">
+      <LineId Id="18" Count="14" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="34" Count="15" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="76" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="116" Count="1" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="91" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

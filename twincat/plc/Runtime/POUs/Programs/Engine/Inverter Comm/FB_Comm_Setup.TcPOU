@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Comm_Setup" Id="{d02a801b-8cb8-4a15-8610-e8a72fc76fdf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Comm_Setup
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	start: BOOL;
+	i: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[/// INIT PLANT PARAMETERS ///////////////////////////
+FOR i := 1 TO GVL.n_slave DO
+	/// server info ///
+	GVL.inv[i].tcp_port := GVL.initial_tcp_port + i;	
+	GVL.inv[i].unit_id := 1;
+	
+	/// active power ///
+	GVL.inv[i].n_quantity_act_pwr := 2;
+	GVL.inv[i].mb_addr_act_pwr := 1;
+	GVL.inv[i].active_pwr_nominal_pwr := GVL.power_plant.nominal_power / Gvl.n_slave;
+	
+	/// inverter status /// 
+	GVL.inv[i].health := 1;
+	GVL.inv[i].mb_h_addr := 0;
+	GVL.inv[i].health_quantity := 1;
+	
+	/// reactive power ///
+	GVL.inv[i].n_quantity_react_pwr := 2;
+	GVL.inv[i].mb_addr_react_pwr := 3;
+	GVL.inv[i].reactive_pwr_nominal_pwr := GVL.power_plant.nominal_power / GVL.n_slave;
+	
+	/// init set point memory ////
+	GVL_Act_Pwr.setpoint_mem := GVL_Act_Pwr.setpoint;
+	GVL_React_Pwr.setpoint_mem := GVL_React_Pwr.setpoint;
+END_FOR
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Comm_Setup">
+      <LineId Id="1" Count="25" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

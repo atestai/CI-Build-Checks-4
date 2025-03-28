@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.65">
+	<Project ProjectGUID="{75EB1C70-9625-46AF-A666-BFA2554A524B}" TargetNetId="39.79.174.47.1.1" Target64Bit="true" TargetConnectionTimeout="1" ShowHideConfigurations="#x6">
+		<System>
+			<Settings MaxCpus="2">
+				<Cpu CpuId="1"/>
+				<IoIdleTask CycleTime="100000"/>
+			</Settings>
+			<Licenses>
+				<Target>
+					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
+				</Target>
+			</Licenses>
+			<Tasks>
+				<Task Id="2" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{2EBF2579-D1A0-4ACB-B468-906E2541B420}" Name="plcProject" PrjFilePath="plcProject\plcProject.plcproj" TmcFilePath="plcProject\plcProject.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="plcProject\plcProject.tmc" TmcHash="{B5ED8A3D-72B9-3EA6-9C2A-2856A7674AE1}">
+					<Name>plcProject Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<UnrestoredVarLinks ImportTime="2025-02-21T13:34:39">
+						<OwnerA Name="InputDst" Prefix="TIPC^plcProject^plcProject Instance" Type="1">
+							<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1809)">
+								<Link VarA="MAIN.inpArray[10]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 10^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[11]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 11^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[12]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 12^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[13]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 13^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[14]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 14^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[15]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 15^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[16]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 16^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[1]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 1^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[2]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 2^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[3]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 3^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[4]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 4^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[5]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 5^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[6]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 6^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[7]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 7^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[8]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 8^Input" Size="1" RestoreInfo="ANotFound"/>
+								<Link VarA="MAIN.inpArray[9]" TypeA="BOOL" InOutA="0" GuidA="{18071995-0000-0000-0000-000000000030}" VarB="Channel 9^Input" Size="1" RestoreInfo="ANotFound"/>
+							</OwnerB>
+						</OwnerA>
+					</UnrestoredVarLinks>
+					<Contexts>
+						<Context>
+							<Id>0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010020</OTCID>
+							</ManualConfig>
+							<Priority>20</Priority>
+							<CycleTime>10000000</CycleTime>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502001"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

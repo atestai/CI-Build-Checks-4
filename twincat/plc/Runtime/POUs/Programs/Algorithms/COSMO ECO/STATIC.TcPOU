@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Static" Id="{14fddb6e-8707-4222-bfd2-33991b1c0bc2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION Static : stCMD_SET
+VAR_INPUT
+END_VAR
+VAR
+	target: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[target := GVL.VIRTUAL_POI_METER.active_power_prod;														
+Static.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - Target) / (3600 / GVL.power_plant.sample_time); 
+Static.plant_sp := GVL.VIRTUAL_METER.active_power_prod / GVL.power_plant.nominal_power;
+
+IF GVL.battery.soc > GVL.battery.max_tolerable_soc OR (*power_plant.ReachingSetPoint AND *) GVL.battery.soc > GVL.battery.soc_to_remove_sp THEN	// TO DO: capire come implementare la logica del "ReachingSetPoint"
+	
+	//power_plant.ReachingSetPoint := TRUE;
+	Static.plant_sp := (GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power) - GVL.power_plant.safety_margin;    
+	
+ELSE
+	
+	//PowerPlant.ReachingSetPoint := FALSE;
+
+	IF Static.plant_sp <> 1 THEN			
+		
+		Static.plant_sp := 1;
+	
+	ELSE
+	
+		Static.plant_sp := -2;	
+		
+	END_IF 
+
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="Static">
+      <LineId Id="79" Count="24" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

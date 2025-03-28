@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <GVL Name="GVL_Voltage" Id="{06246941-8e68-4566-874a-d99ef6e4eb4f}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	reference_value: REAL := 1000;
+	measured_value: REAL;
+	error: REAL;
+	norm_error: REAL;
+	max_norm_correction: REAL := 0.35;
+	min_norm_correction: REAL := -0.35;
+	output_qv_regulation: REAL;
+	last_output_qv_regulation: REAL;
+	output_pi: REAL;
+	pi_ctrl_max_output: REAL := 1;
+	pi_ctrl_min_output: REAL := -1;
+	hyst_clearance: REAL := 0.01;	// isteresi TO DO: controlla questo parametro 
+	v_norm: REAL;
+	
+	// QV map vertices [-0.1, 0.33], [-0.01, 0.0], [0.01, 0.0], [0.1, -0.33]
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

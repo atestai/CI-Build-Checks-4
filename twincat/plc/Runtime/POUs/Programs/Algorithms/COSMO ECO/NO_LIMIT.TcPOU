@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="No_Limit" Id="{ce1aff9f-90b8-4f68-b965-a72c8ed78673}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION No_Limit : stCMD_SET
+VAR_INPUT
+END_VAR
+VAR
+	max_diff_per_sample: REAL;
+	remaining_battery_capacity: REAL;
+	constant_kw_to_support: REAL;
+	target: REAL;
+	hours_battery_support: REAL;
+	can_handle_two_hours_prod: BOOL;
+	multiplier: REAL;
+	max_kw: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[No_Limit.plant_sp := Calculate_Set_Point_Normal_Conditions();
+max_diff_per_sample := GVL.power_plant.ramp_limit / (60 / GVL.power_plant.sample_time);
+remaining_battery_capacity := (GVL.battery.soc - GVL.battery.min_working_soc) * GVL.battery.capacity;  
+constant_kw_to_support := (GVL.power_plant.avg_prod / 3.0) / GVL.battery.efficiency;
+
+
+IF No_Limit.plant_sp = -1 THEN
+    target := GVL.VIRTUAL_POI_METER.active_power_prod + GVL.power_plant.max_power_increase;  
+    No_Limit.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target) / (3600 / GVL.power_plant.sample_time);
+    No_Limit.plant_sp := 1;
+    RETURN;
+END_IF
+
+IF constant_kw_to_support = 0 THEN
+    hours_battery_support := 24; 	
+ELSIF constant_kw_to_support > 0 THEN
+    hours_battery_support := (remaining_battery_capacity / constant_kw_to_support); 
+END_IF
+
+
+can_handle_two_hours_prod := (hours_battery_support >= 2); 
+
+IF GVL.VIRTUAL_METER.active_power_prod > 0 THEN
+    No_Limit.command_for_battery := 0;
+    target := GVL.power_plant.avg_prod;
+
+    IF (NOT can_handle_two_hours_prod) AND ((GVL.VIRTUAL_METER.active_power_prod - GVL.VIRTUAL_POI_METER.active_power_prod) > GVL.power_plant.max_power_increase) THEN
+        target := GVL.VIRTUAL_POI_METER.active_power_prod;
+        
+        IF GVL.battery.soc > 0 THEN
+            target := target + GVL.power_plant.max_power_increase / 3;
+        END_IF
+        
+        No_Limit.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target) / (3600 / GVL.power_plant.sample_time);
+        
+        IF GVL.battery.soc <= GVL.battery.max_opt_soc AND target >= GVL.VIRTUAL_METER.active_power_prod THEN
+            No_Limit.plant_sp := 1;
+        END_IF
+        RETURN;
+    
+    ELSE
+        IF GVL.battery.soc < GVL.battery.min_opt_soc AND (GVL.VIRTUAL_METER.active_power_prod / GVL.power_plant.nominal_power) > 0.9 THEN
+			
+            IF (GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power) > 0.80 THEN
+                target := GVL.VIRTUAL_POI_METER.active_power_prod - max_diff_per_sample;
+            END_IF
+			IF GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power < 0.80 THEN
+                target := GVL.VIRTUAL_POI_METER.active_power_prod + max_diff_per_sample;
+            END_IF
+            
+            No_Limit.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target) / (3600 / GVL.power_plant.sample_time);
+            
+            IF GVL.battery.soc <= GVL.battery.max_tolerable_soc AND target >= GVL.VIRTUAL_METER.active_power_prod THEN
+                No_Limit.plant_sp := 1;
+            END_IF
+            RETURN;
+        
+        ELSE
+            IF GVL.battery.soc > GVL.battery.max_opt_soc AND can_handle_two_hours_prod THEN
+                target := GVL.VIRTUAL_POI_METER.active_power_prod + max_diff_per_sample;
+                
+                IF target > GVL.power_plant.nominal_power THEN										
+                    target := GVL.power_plant.nominal_power;
+                END_IF
+                
+                No_Limit.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target) / (3600 / GVL.power_plant.sample_time);
+                
+                IF GVL.battery.soc <= GVL.battery.max_tolerable_soc AND target >= GVL.VIRTUAL_METER.active_power_prod THEN
+                    No_Limit.plant_sp := 1;
+                END_IF
+                RETURN;			
+            END_IF
+
+            IF ABS(GVL.power_plant.avg_prod_diff) > max_diff_per_sample THEN
+                IF GVL.power_plant.avg_prod_diff > 0 THEN
+                    target := target - (GVL.power_plant.avg_prod_diff - max_diff_per_sample);
+                ELSE
+                    IF (ABS(GVL.power_plant.avg_prod_diff) / max_diff_per_sample) < 3 OR GVL.battery.soc < 0.4 THEN
+                        target := target + ABS(GVL.power_plant.avg_prod_diff) - max_diff_per_sample;
+                    ELSE
+                        multiplier := SQRT(ABS(GVL.power_plant.avg_prod_diff) / max_diff_per_sample);
+                        
+                        IF multiplier > 3 THEN			
+                            multiplier := 3;
+                        END_IF
+                        
+                        target := target + (multiplier * (ABS(GVL.power_plant.avg_prod_diff) - max_diff_per_sample));
+                    END_IF
+                END_IF
+            END_IF
+                    
+            IF ABS(GVL.VIRTUAL_POI_METER.active_power_prod - target) > max_diff_per_sample THEN
+                IF target > GVL.VIRTUAL_POI_METER.active_power_prod THEN
+                    target := GVL.VIRTUAL_POI_METER.active_power_prod + max_diff_per_sample;
+                    
+                    IF GVL.battery.soc < GVL.battery.min_tolerable_soc AND GVL.battery.soc > 0 THEN	
+                        target := GVL.VIRTUAL_POI_METER.active_power_prod - ((max_diff_per_sample) / (1 / GVL.battery.soc));
+					END_IF
+                    IF GVL.battery.soc = 0 THEN
+                        target := GVL.VIRTUAL_POI_METER.active_power_prod - (max_diff_per_sample / 3);
+                    END_IF
+                    
+                ELSE
+                    max_kw := GVL.battery.soc * (GVL.battery.capacity / 10);
+                    
+                    IF GVL.battery.soc > 0.2 AND max_diff_per_sample < max_kw THEN
+                        target := GVL.VIRTUAL_POI_METER.active_power_prod - (max_diff_per_sample * (1 - GVL.battery.soc));
+                    ELSE
+                        target := GVL.VIRTUAL_POI_METER.active_power_prod - max_diff_per_sample;						
+                    END_IF
+                END_IF			
+            END_IF
+        END_IF
+
+        IF target < 0 THEN
+            target := 0;
+        END_IF
+        
+        No_Limit.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target) / (3600 / GVL.power_plant.sample_time);
+        
+        IF GVL.battery.soc <= GVL.battery.max_tolerable_soc AND target >= GVL.VIRTUAL_METER.active_power_prod THEN
+            No_Limit.plant_sp := 1;
+        END_IF
+        RETURN;	
+    END_IF
+ELSE
+    target := GVL.VIRTUAL_POI_METER.active_power_prod - max_diff_per_sample;
+
+    IF target < 0 THEN 
+        target := 0;
+    END_IF
+
+    No_Limit.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target) / (3600 / GVL.power_plant.sample_time);
+    
+    IF GVL.battery.soc <= GVL.battery.max_tolerable_soc AND target >= GVL.VIRTUAL_METER.active_power_prod THEN
+        No_Limit.plant_sp := 1;
+    END_IF
+	RETURN;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="No_Limit">
+      <LineId Id="303" Count="138" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

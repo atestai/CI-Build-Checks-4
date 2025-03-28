@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_PI_Setpoint" Id="{1a3fde5a-0e94-4a07-9ade-7ae493aaf781}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PI_Setpoint
+VAR_IN_OUT
+	feedback_sp: REAL;
+END_VAR
+VAR_INPUT
+	sp_value: REAL;
+END_VAR
+VAR_OUTPUT
+	pi_output: REAL;
+END_VAR
+VAR
+	fbCTRL_PI: FB_CTRL_PI;
+	stCTRL_PI_PARAMS: ST_CTRL_PI_PARAMS;
+	eMode: E_CTRL_MODE;
+	bInit: BOOL := TRUE;
+	fbTON: TON;
+	f_out: REAL;
+	activatePI: BOOL := TRUE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bInit THEN
+	(* init parameter struct *)
+	stCTRL_PI_PARAMS.tCtrlCycleTime		:= T#50MS;		// TO DO: parametrizza questi valori
+	stCTRL_PI_PARAMS.tTaskCycleTime		:= T#10MS;
+	stCTRL_PI_PARAMS.tTn				:= T#2000MS;		(* integral gain Tn				*)
+	stCTRL_PI_PARAMS.fKp				:= 0.04;			(* proportional gain Kp				*)
+	stCTRL_PI_PARAMS.fOutMaxLimit		:=  GVL_Act_Pwr.pi_ctrl_max_output;  		(* maximum output limit				*)
+	stCTRL_PI_PARAMS.fOutMinLimit		:=  GVL_Act_Pwr.pi_ctrl_min_output;			(* minimum output limit				*)
+
+	(* set the mode to ACTIVE --> normal operation *)
+	eMode := eCTRL_MODE_ACTIVE;
+
+	(* reset the init flag *)
+	bInit := FALSE;
+END_IF
+
+IF activatePI THEN
+	fbCTRL_PI(
+		fSetpointValue:= sp_value, 
+		fActualValue:= feedback_sp, 
+		fManSyncValue:= , 
+		bSync:= , 
+		eMode:= eMode, 
+		bHold:= , 
+		fOut=> pi_output, 
+		bARWactive=> , 
+		eState=> , 
+		eErrorId=> , 
+		bError=> , 
+		stParams:= stCTRL_PI_PARAMS
+	);
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_PI_Setpoint">
+      <LineId Id="2" Count="33" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

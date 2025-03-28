@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Primary_Regulations" Id="{6e668ec6-83d7-4bc1-af07-c6bf6bcae9b9}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Primary_Regulations
+VAR
+	f_error: REAL;
+	power_percentage_delta: REAL;
+	overshoot_freq_error: REAL;
+	delta_p: REAL;
+	available_power: REAL;
+	reach_sp: FB_Reach_SP_ActP;
+	command_dispatcher: FB_Command_Dispatcher;
+	i: UINT;
+	current_pf: REAL;
+	phi: REAL;
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+	
+	reactp_sp_from_pf();	
+
+END_IF
+
+IF GVL.WISNAM_PPC.actp_freq_reg_enabled THEN
+
+	power_at_nominal_freq();
+	IF GVL_Freq.frequency_regulation_priority THEN
+		
+		GVL_Act_Pwr.setpoint_to_send := GVL_Act_Pwr.freq_reg_sp;
+		
+	END_IF
+		
+END_IF
+
+
+IF GVL.WISNAM_PPC.qv_ctrl_enabled THEN
+	
+	GVL_React_Pwr.setpoint_to_send := outputQV_regulation();
+
+END_IF
+
+
+IF GVL.WISNAM_PPC.actp_freq_reg_enabled AND GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+	
+	GVL_React_Pwr.total_sp := MIN(GVL_React_PWr.max_q_pf_regulation, GVL_React_Pwr.total_sp);
+
+END_IF
+
+
+command_dispatcher();
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="Primary_Regulations">
+      <LineId Id="184" Count="8" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="194" Count="22" />
+      <LineId Id="149" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,290 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_READ_WITHOUT_TIMER" Id="{498c4226-6a23-4ae3-aa41-4a1cf5837885}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_READ_WITHOUT_TIMER
+
+VAR_IN_OUT
+	device: DEVICE;
+	bExecute : BOOL;
+END_VAR
+
+VAR_OUTPUT
+	execRead : BOOL := FALSE;
+END_VAR
+
+VAR
+	
+	fbTime   : FB_LocalSystemTime := ( bEnable := TRUE, dwCycle := 1 );
+	
+	readInputRegister : FB_MBReadInputRegs;
+	readHoldingRegister : FB_MBReadRegs;
+	
+
+	//TYPE_ARR: ARRAY[1..2] OF STRING; 
+	done: BOOL;
+	
+	timeOut: TIME := T#2S;
+	readError : INT := 0;
+	idError : UDINT;
+	
+	k: UINT;
+	z: INT;
+	
+	switch_first_bit: INT;
+	Aux_Dword: DWORD;
+	
+	j: INT := 0;
+	
+	timer: TON;
+	delay : TIME := T#200MS;
+	
+	index : INT := 0;
+	subState: INT;
+	
+	ReadInputs: INT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	
+IF bExecute AND NOT execRead THEN
+	execRead 			:= TRUE;
+	index 				:= 1;
+	subState 			:= 6;
+	
+	readError 			:= 0;
+	idError 			:= 0;
+	
+	device.CheckComm 	:= 0;
+
+	fbTime();
+	device.readTimestamp := DT_TO_UDINT( SYSTEMTIME_TO_DT( fbTime.systemTime ) );
+END_IF
+
+
+
+IF execRead THEN
+	
+	CASE subState OF
+		
+		1: 
+			IF device.readParameter[index].id <> 0 THEN 
+				
+				subState := 2;
+				
+				IF device.readParameter[index].ModbusFunction = 3 THEN	
+				
+					readHoldingRegister(
+						sIPAddr:= device.ServerIP, 
+						nTCPPort:= device.ServerNumPort, 
+						nUnitID:= device.ServerReadUnitID, 
+						nQuantity:= device.readParameter[index].ReadQty, 
+						nMBAddr:= device.readParameter[index].ReadAddress, 
+						cbLength:= SIZEOF(WORD) * device.readParameter[index].ReadQty, 
+						pDestAddr:= ADR(device.readParameter[index].AuxArr), 
+						bExecute:= TRUE , 
+						tTimeout:= timeOut, 
+						bBusy=> device.readParameter[index].bBusy, 
+						bError=>,
+						(*bBusy=> device.ReadBusy,
+						bError => device.ReadError,*)
+						nErrId=>, 
+						cbRead=> 
+					);	
+					
+						
+
+				ELSIF device.readParameter[index].ModbusFunction = 4 THEN
+					
+					
+					readInputRegister(
+						sIPAddr:= device.ServerIP, 
+						nTCPPort:= device.ServerNumPort, 
+						nUnitID:= device.ServerReadUnitID, 
+						nQuantity:= device.readParameter[index].ReadQty, 
+						nMBAddr:= device.readParameter[index].ReadAddress, 
+						cbLength:= SIZEOF(WORD) * device.readParameter[index].ReadQty, 
+						pDestAddr:= ADR(device.readParameter[index].AuxArr), 
+						bExecute:= TRUE ,  
+						tTimeout:= timeOut, 
+						bBusy=> device.readParameter[index].bBusy, 
+						bError=>,
+						(*bBusy=> device.ReadBusy,
+						bError => device.ReadError,*)
+						nErrId=>, 
+						cbRead=> 
+					);
+				
+					
+					
+				END_IF
+			ELSE
+				subState := 3;
+			END_IF
+			
+		2: 
+			
+			IF device.readParameter[index].ModbusFunction = 3 THEN
+				
+				IF readHoldingRegister.bError THEN
+ 					IF readHoldingRegister.nErrId = 1861 THEN
+						idError := idError +1 ;
+					END_IF
+					
+					device.CheckComm := readHoldingRegister.nErrId;
+					
+					device.readParameter[index].bError := TRUE; 
+					subState := 4;
+				ELSIF NOT readHoldingRegister.bBusy THEN
+					
+					device.readParameter[index].bError := FALSE;
+					subState := 4;
+				END_IF
+				
+			
+				readHoldingRegister(bExecute:= FALSE);
+			
+				
+				
+			ELSIF device.readParameter[index].ModbusFunction = 4 THEN
+				
+				IF readInputRegister.bError THEN
+					
+					IF readInputRegister.nErrId = 1861 THEN
+						idError := idError +1 ;
+					END_IF
+					
+					device.CheckComm := readInputRegister.nErrId;
+					
+					device.readParameter[index].bError := TRUE;
+					subState := 4;
+				
+				ELSIF NOT readInputRegister.bBusy THEN
+					device.readParameter[index].bError := FALSE;
+					subState := 4;
+				END_IF
+   
+				readInputRegister(bExecute:= FALSE);
+				
+			END_IF
+						
+			
+		3: 
+			// EXIT
+			execRead := FALSE; 
+			
+		4: // INCREMENT
+			timer(IN:= NOT timer.Q, PT:= delay, Q=> , ET=> );
+			
+			IF timer.Q THEN
+				index := index + 1;
+				subState := 6;
+			END_IF
+			
+		6: 	// CHECK
+			IF index > device.readParameterCounter THEN
+				subState := 3;
+			ELSE 
+				subState := 1;
+			END_IF
+		
+		ELSE
+			// Azioni di default se nessun altro caso corrisponde
+			//errore := TRUE;
+			execRead := FALSE;
+			
+	END_CASE;
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_READ_WITHOUT_TIMER">
+      <LineId Id="2186" Count="0" />
+      <LineId Id="2781" Count="1" />
+      <LineId Id="2798" Count="0" />
+      <LineId Id="3443" Count="0" />
+      <LineId Id="2815" Count="0" />
+      <LineId Id="2813" Count="0" />
+      <LineId Id="3494" Count="0" />
+      <LineId Id="3874" Count="1" />
+      <LineId Id="2816" Count="0" />
+      <LineId Id="2806" Count="1" />
+      <LineId Id="2779" Count="0" />
+      <LineId Id="3354" Count="0" />
+      <LineId Id="2907" Count="0" />
+      <LineId Id="2783" Count="0" />
+      <LineId Id="4018" Count="0" />
+      <LineId Id="3519" Count="0" />
+      <LineId Id="3367" Count="0" />
+      <LineId Id="3478" Count="0" />
+      <LineId Id="3368" Count="0" />
+      <LineId Id="3390" Count="0" />
+      <LineId Id="3404" Count="1" />
+      <LineId Id="3393" Count="1" />
+      <LineId Id="3698" Count="0" />
+      <LineId Id="3702" Count="15" />
+      <LineId Id="3701" Count="0" />
+      <LineId Id="3975" Count="0" />
+      <LineId Id="3955" Count="0" />
+      <LineId Id="3700" Count="0" />
+      <LineId Id="3424" Count="0" />
+      <LineId Id="3750" Count="0" />
+      <LineId Id="3937" Count="0" />
+      <LineId Id="3752" Count="15" />
+      <LineId Id="3751" Count="0" />
+      <LineId Id="3941" Count="0" />
+      <LineId Id="3940" Count="0" />
+      <LineId Id="3398" Count="0" />
+      <LineId Id="3396" Count="0" />
+      <LineId Id="3401" Count="0" />
+      <LineId Id="3391" Count="1" />
+      <LineId Id="3385" Count="0" />
+      <LineId Id="3372" Count="1" />
+      <LineId Id="3445" Count="0" />
+      <LineId Id="3490" Count="0" />
+      <LineId Id="3721" Count="0" />
+      <LineId Id="3724" Count="2" />
+      <LineId Id="3872" Count="1" />
+      <LineId Id="3727" Count="0" />
+      <LineId Id="3819" Count="0" />
+      <LineId Id="3728" Count="1" />
+      <LineId Id="3823" Count="0" />
+      <LineId Id="3822" Count="0" />
+      <LineId Id="3722" Count="1" />
+      <LineId Id="3730" Count="0" />
+      <LineId Id="3942" Count="0" />
+      <LineId Id="3731" Count="0" />
+      <LineId Id="3946" Count="0" />
+      <LineId Id="3943" Count="0" />
+      <LineId Id="3454" Count="0" />
+      <LineId Id="3449" Count="0" />
+      <LineId Id="3734" Count="0" />
+      <LineId Id="3737" Count="5" />
+      <LineId Id="3870" Count="1" />
+      <LineId Id="3820" Count="0" />
+      <LineId Id="3743" Count="2" />
+      <LineId Id="3824" Count="0" />
+      <LineId Id="3746" Count="2" />
+      <LineId Id="3950" Count="0" />
+      <LineId Id="3948" Count="0" />
+      <LineId Id="3447" Count="0" />
+      <LineId Id="3462" Count="0" />
+      <LineId Id="3375" Count="2" />
+      <LineId Id="3383" Count="0" />
+      <LineId Id="3464" Count="1" />
+      <LineId Id="3524" Count="2" />
+      <LineId Id="3466" Count="1" />
+      <LineId Id="3527" Count="0" />
+      <LineId Id="3468" Count="1" />
+      <LineId Id="3471" Count="1" />
+      <LineId Id="3474" Count="1" />
+      <LineId Id="3379" Count="0" />
+      <LineId Id="3473" Count="0" />
+      <LineId Id="3380" Count="2" />
+      <LineId Id="3693" Count="0" />
+      <LineId Id="3476" Count="0" />
+      <LineId Id="3359" Count="0" />
+      <LineId Id="3358" Count="0" />
+      <LineId Id="2785" Count="0" />
+      <LineId Id="2777" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

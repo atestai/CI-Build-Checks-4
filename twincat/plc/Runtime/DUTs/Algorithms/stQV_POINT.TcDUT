@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stQV_POINT" Id="{d3c2c3b1-8e9f-4db1-8e4b-abeeae37ecac}">
+    <Declaration><![CDATA[TYPE stQV_POINT :
+STRUCT
+	voltage_ratio: REAL;
+	q_pnd_ratio: REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Calculate_Opt_SOC_No_Decrease" Id="{90977a27-c97f-494c-9e2d-1bf5aa334adf}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION Calculate_Opt_SOC_No_Decrease : REAL
+VAR_INPUT
+	most_rapid_decrease_h: REAL;
+	max_diff_per_sample: REAL;
+END_VAR
+VAR
+	most_rapid_decrease_time: REAL;
+	constant_kw_to_support: REAL;
+	decrease_avg_kw_to_support: REAL;
+	avg_kwh_to_support: REAL;
+	decrease_time_found: REAL;
+	optimal_soc: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[most_rapid_decrease_time := most_rapid_decrease_h*(GVL.VIRTUAL_METER.active_power_prod / GVL.power_plant.nominal_power);
+constant_kw_to_support := GVL.VIRTUAL_POI_METER.active_power_prod;
+decrease_avg_kw_to_support := (GVL.VIRTUAL_METER.active_power_prod / 2);
+
+IF GVL.VIRTUAL_POI_METER.active_power_prod > GVL.VIRTUAL_METER.active_power_prod THEN
+	
+	decrease_avg_kw_to_support := decrease_avg_kw_to_support;
+
+END_IF
+
+avg_kwh_to_support := (constant_kw_to_support * (3 - most_rapid_decrease_time) + decrease_avg_kw_to_support * most_rapid_decrease_time) / 3;
+decrease_time_found := (avg_kwh_to_support)/(max_diff_per_sample * 1200);
+
+optimal_soc := avg_kwh_to_support*3+(avg_kwh_to_support*decrease_time_found) / GVL.battery.efficiency;
+Calculate_Opt_SOC_No_Decrease := optimal_soc;
+ ]]></ST>
+    </Implementation>
+    <LineIds Name="Calculate_Opt_SOC_No_Decrease">
+      <LineId Id="60" Count="14" />
+      <LineId Id="22" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

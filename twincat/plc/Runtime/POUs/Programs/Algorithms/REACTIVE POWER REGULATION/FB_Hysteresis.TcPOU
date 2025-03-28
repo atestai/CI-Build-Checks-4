@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Hysteresis" Id="{bec18c69-827a-4405-9244-c6b262ad44fd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Hysteresis
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	half_clearance: REAL;
+	cap: REAL;
+	floor: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[half_clearance := GVL_Voltage.hyst_clearance / 2;
+cap := GVL_Voltage.output_pi + half_clearance;
+floor := GVL_Voltage.output_pi - half_clearance;
+
+GVL_Voltage.output_qv_regulation := MIN(cap, MAX(floor, GVL_Voltage.last_output_qv_regulation));
+GVL_Voltage.last_output_qv_regulation := GVL_Voltage.output_qv_regulation;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Hysteresis">
+      <LineId Id="10" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

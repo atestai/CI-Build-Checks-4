@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.13">
+  <POU Name="FB_READ" Id="{edbf8e27-904f-476c-9bf7-a5dc11fb1fc9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_READ
+
+VAR_IN_OUT
+	device: DEVICE;
+	bExecute : BOOL;
+	CounterExecuteTotal : DINT; 
+END_VAR
+
+VAR
+	
+	readInputCount : INT := 0;
+	ReadInputs: ARRAY[1..GVL.MAX_READ_PARAMETER] OF FB_MBReadInputRegs;
+	
+	readRegsCount : INT := 0;
+	ReadRegs: ARRAY[1..GVL.MAX_READ_PARAMETER] OF FB_MBReadRegs;
+
+	
+	fbTime   : FB_LocalSystemTime := ( bEnable := TRUE, dwCycle := 1 );
+	
+	//timeStamp : ULINT;
+	//nReadInputFB: INT := 3;
+	//nReadRegsFB: INT := 1;
+	
+	TYPE_ARR: ARRAY[1..2] OF STRING; 
+	done: BOOL;
+	
+
+	timeOut: TIME := T#3S;
+	readError : INT;
+	
+	k: UINT;
+	z: INT;
+	
+	switch_first_bit: INT;
+	Aux_Dword: DWORD;
+	
+	j: INT := 1;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	
+readInputCount 	:= 0; 
+readRegsCount 	:= 0;
+readError 		:= 0;
+	
+fbTime();
+device.readTimestamp := DT_TO_UDINT( SYSTEMTIME_TO_DT( fbTime.systemTime ) );
+	
+	//j := 1;
+	
+FOR j := 1 TO device.readParameterCounter DO
+
+	IF device.readParameter[j].id <> 0 THEN 
+			
+		IF device.readParameter[j].ModbusFunction = 4 THEN
+			
+			readInputCount := readInputCount + 1;
+ 
+			ReadInputs[readInputCount](
+				sIPAddr:= device.ServerIP, 
+				nTCPPort:= device.ServerNumPort, 
+				nUnitID:= device.ServerReadUnitID, 
+				nQuantity:= device.readParameter[j].ReadQty, 
+				nMBAddr:= device.readParameter[j].ReadAddress, 
+				cbLength:= SIZEOF(WORD) * device.readParameter[j].ReadQty, 
+				pDestAddr:= ADR(device.readParameter[j].AuxArr), 
+				bExecute:=bExecute , 
+				tTimeout:= timeOut, 
+				bBusy=> device.readParameter[j].bBusy, 
+				bError=> device.readParameter[j].bError, 
+				nErrId=> , 
+				cbRead=> 
+			);
+			
+		ELSIF device.readParameter[j].ModbusFunction = 3 THEN
+			
+			readRegsCount := readRegsCount + 1;
+			
+			ReadRegs[readRegsCount](
+				sIPAddr:= device.ServerIP, 
+				nTCPPort:= device.ServerNumPort, 
+				nUnitID:= device.ServerReadUnitID, 
+				nQuantity:= device.readParameter[j].ReadQty, 
+				nMBAddr:= device.readParameter[j].ReadAddress, 
+				cbLength:= SIZEOF(WORD) * device.readParameter[j].ReadQty, 
+				pDestAddr:= ADR(device.readParameter[j].AuxArr), 
+				bExecute:=bExecute , 
+				tTimeout:= timeOut, 
+				bBusy=> device.readParameter[j].bBusy, 
+				bError=> device.readParameter[j].bError, 
+				nErrId=> , 
+				cbRead=> 
+			);	
+		
+		END_IF
+	
+		
+		IF device.readParameter[j].bError THEN
+			readError := readError + 1;
+			
+			FOR k:= 1 TO LREAL_TO_UINT((device.readParameter[j].ReadQty / 2) + 0.999999) DO
+				device.readParameter[j].ValueArr[k] := GVL.fPosMinReal;	
+			END_FOR
+			
+		ELSE
+			
+			z := 1;
+			
+			FOR k:= 1 TO device.readParameter[j].ReadCount DO
+				
+				done := FindAndSplitChar (
+						sSeparatorChar := ':', pSrcString := ADR(device.readParameter[j].TypeArr[k]),
+						pLeftString := ADR(TYPE_ARR[1]), nLeftSize := SIZEOF(TYPE_ARR[1]),
+						pRightString := ADR(TYPE_ARR[2]), nRightSize := SIZEOF(TYPE_ARR[2]),
+						bSearchFromRight := FALSE
+				);  		
+				
+					
+				IF TYPE_ARR[1] = 'UINT32' AND TYPE_ARR[2] = 'BEBE' THEN
+					device.readParameter[j].ValueArr[k] := POU_CONV_WORD_TO_REAL_FC(device.readParameter[j].AuxArr[z], device.readParameter[j].AuxArr[z + 1]);
+					z := z + 2;
+					
+				ELSIF TYPE_ARR[1] = 'UINT32' AND TYPE_ARR[2] = 'LEBE' THEN
+					device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+					device.readParameter[j].AuxArr[z+1] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z+1]);
+					device.readParameter[j].ValueArr[k] := POU_CONV_WORD_TO_REAL_FC(device.readParameter[j].AuxArr[z], device.readParameter[j].AuxArr[z + 1]);
+					z := z + 2;	
+					
+				ELSIF TYPE_ARR[1] = 'UINT32' AND TYPE_ARR[2] = 'BELE' THEN
+					device.readParameter[j].ValueArr[k] := POU_CONV_WORD_TO_REAL_FC(device.readParameter[j].AuxArr[z+1], device.readParameter[j].AuxArr[z]);
+					z := z + 2;
+	
+				ELSIF TYPE_ARR[1] = 'UINT32' AND TYPE_ARR[2] = 'LELE' THEN
+					device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+					device.readParameter[j].AuxArr[z+1] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z+1]);
+					device.readParameter[j].ValueArr[k] := POU_CONV_WORD_TO_REAL_FC(device.readParameter[j].AuxArr[z+1], device.readParameter[j].AuxArr[z]);
+					z := z + 2;	
+					
+				ELSIF TYPE_ARR[1] = 'INT32' AND TYPE_ARR[2] = 'BEBE' THEN
+					Aux_Dword := word_to_int32(device.readParameter[j].AuxArr[z], device.readParameter[j].AuxArr[z + 1]);
+					IF Aux_Dword.31 = 0 THEN
+						device.readParameter[j].ValueArr[k] := DWORD_TO_REAL(Aux_Dword);
+					ELSE
+						Aux_Dword.31 := 0;
+						device.readParameter[j].ValueArr[k] := -1 * (EXPT(2,31) - Aux_Dword);
+					END_IF
+					z := z + 2;
+				
+
+				ELSIF TYPE_ARR[1] = 'INT32' AND TYPE_ARR[2] = 'LEBE' THEN
+					device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+					device.readParameter[j].AuxArr[z+1] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z+1]);
+					Aux_Dword := word_to_int32(device.readParameter[j].AuxArr[z], device.readParameter[j].AuxArr[z + 1]);
+					IF Aux_Dword.31 = 0 THEN
+						device.readParameter[j].ValueArr[k] := DWORD_TO_REAL(Aux_Dword);
+					ELSE
+						Aux_Dword.31 := 0;
+						device.readParameter[j].ValueArr[k] := -1 * (EXPT(2,31) - Aux_Dword);
+					END_IF
+					z := z + 2;
+						
+					
+				ELSIF TYPE_ARR[1] = 'INT32' AND TYPE_ARR[2] = 'BELE' THEN
+					Aux_Dword := word_to_int32(device.readParameter[j].AuxArr[z+1], device.readParameter[j].AuxArr[z]);
+					IF Aux_Dword.31 = 0 THEN
+						device.readParameter[j].ValueArr[k] := DWORD_TO_REAL(Aux_Dword);
+					ELSE
+						Aux_Dword.31 := 0;
+						device.readParameter[j].ValueArr[k] := -1 * (EXPT(2,31) - Aux_Dword);
+					END_IF
+					z := z + 2;
+					
+
+
+				ELSIF TYPE_ARR[1] = 'INT32' AND TYPE_ARR[2] = 'LELE' THEN
+					device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+					device.readParameter[j].AuxArr[z+1] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z+1]);
+					Aux_Dword := word_to_int32(device.readParameter[j].AuxArr[z+1], device.readParameter[j].AuxArr[z]);
+					
+					IF Aux_Dword.31 = 0 THEN
+						device.readParameter[j].ValueArr[k] := DWORD_TO_REAL(Aux_Dword);
+					ELSE
+						Aux_Dword.31 := 0;
+						device.readParameter[j].ValueArr[k] := -1 * (EXPT(2,31) - Aux_Dword);
+					END_IF
+					z := z + 2;	
+
+					
+				ELSIF TYPE_ARR[1] = 'UINT16' AND (TYPE_ARR[2] = 'LELE' OR TYPE_ARR[2] = 'LEBE')  THEN
+					device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+					device.readParameter[j].ValueArr[k] :=  WORD_TO_REAL(device.readParameter[j].AuxArr[z]);
+					z := z + 1;
+				
+				ELSIF TYPE_ARR[1] = 'UINT16' AND (TYPE_ARR[2] = 'BELE' OR TYPE_ARR[2] = 'BEBE')  THEN 
+					device.readParameter[j].ValueArr[k] :=  WORD_TO_REAL(device.readParameter[j].AuxArr[z]);
+					z := z + 1;
+					
+					
+				ELSIF TYPE_ARR[1] = 'INT16' AND (TYPE_ARR[2] = 'BELE' OR TYPE_ARR[2] = 'BEBE') THEN 
+					device.readParameter[j].ValueArr[k] := (EXPT(-1, BIT_TO_REAL(device.readParameter[j].AuxArr[z].15))*WORD_TO_REAL(switch_first_bit_16(device.readParameter[j].AuxArr[z])));
+					z := z + 1;	
+					
+
+				ELSIF TYPE_ARR[1] = 'FLOAT32' AND TYPE_ARR[2] = 'BEBE' THEN
+						device.readParameter[j].ValueArr[k] := POU_CONV_WORDS_TO_REAL_FC(device.readParameter[j].AuxArr[z], device.readParameter[j].AuxArr[z + 1]);
+						z := z + 2;
+						
+				ELSIF TYPE_ARR[1] = 'FLOAT32' AND TYPE_ARR[2] = 'BELE' THEN
+						device.readParameter[j].ValueArr[k] := POU_CONV_WORDS_TO_REAL_FC(device.readParameter[j].AuxArr[z+1], device.readParameter[j].AuxArr[z]);
+						z := z + 2;
+						
+				ELSIF TYPE_ARR[1] = 'FLOAT32' AND TYPE_ARR[2] = 'LEBE' THEN
+						device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+						device.readParameter[j].AuxArr[z+1] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z+1]);
+						device.readParameter[j].ValueArr[k] := POU_CONV_WORDS_TO_REAL_FC(device.readParameter[j].AuxArr[z], device.readParameter[j].AuxArr[z+1]);
+						z := z + 2;		
+				
+				ELSIF TYPE_ARR[1] = 'FLOAT32' AND TYPE_ARR[2] = 'LELE' THEN
+						device.readParameter[j].AuxArr[z] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z]); 
+						device.readParameter[j].AuxArr[z+1] := SWAP_BITS_FUN(device.readParameter[j].AuxArr[z+1]);
+						device.readParameter[j].ValueArr[k] := POU_CONV_WORDS_TO_REAL_FC(device.readParameter[j].AuxArr[z+1], device.readParameter[j].AuxArr[z]);
+						z := z + 2;	
+		
+				END_IF
+				
+			END_FOR
+			
+		END_IF
+	END_IF
+			
+END_FOR
+
+	
+		]]></ST>
+    </Implementation>
+    <LineIds Name="FB_READ">
+      <LineId Id="2186" Count="8" />
+      <LineId Id="2196" Count="1" />
+      <LineId Id="2219" Count="2" />
+      <LineId Id="2224" Count="41" />
+      <LineId Id="2271" Count="65" />
+      <LineId Id="2338" Count="24" />
+      <LineId Id="2365" Count="42" />
+      <LineId Id="2409" Count="2" />
+      <LineId Id="83" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

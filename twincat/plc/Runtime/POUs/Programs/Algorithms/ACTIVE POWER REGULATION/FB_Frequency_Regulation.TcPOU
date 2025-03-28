@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Frequency_Regulation" Id="{3226cae0-a76a-47fd-b8a9-32202e917ce5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Frequency_Regulation
+VAR_INPUT
+	current_power: REAL;
+	current_frequency: REAL;
+	p_nd: REAL;
+END_VAR
+VAR_OUTPUT
+	target_pfn: REAL;
+END_VAR
+VAR
+	f_error: REAL;
+	power_percentage_delta: REAL;
+	overshoot_freq_error: REAL;
+	delta_p: REAL;
+	available_power: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[available_power := p_nd * GVL.power_plant.nominal_power;
+target_pfn := current_power;
+
+/// dead-band ////////////////////////////////////////////
+IF GVL_Freq.under_f_db_threshold <= current_frequency AND current_frequency <= GVL_Freq.over_f_db_threshold THEN
+	GVL_Freq.frequency_regulation_priority := FALSE;	
+	RETURN;
+END_IF
+/////////////////////////////////////////////////////////
+
+/// critical scenarios /////////////////////////////////
+IF current_frequency > GVL_Freq.max_value_over_f THEN
+	target_pfn := 0;
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	RETURN;
+END_IF
+
+
+IF current_frequency < GVL_Freq.min_value_under_f THEN
+	target_pfn := p_nd;
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	RETURN;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// FSM-O ///////////////////////////////////////////////
+IF GVL_Freq.over_f_db_threshold < current_frequency AND current_frequency <= GVL_Freq.over_f_medium_threshold THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(current_frequency - GVL_Freq.frequency_reference);
+	power_percentage_delta := f_error*GVL_Freq.S_over_mid_val;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// FSM-U ///////////////////////////////////////////////
+IF GVL_Freq.under_f_db_threshold > current_frequency AND current_frequency >= GVL_Freq.under_f_medium_threshold THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(current_frequency - GVL_Freq.frequency_reference);
+	power_percentage_delta := f_error*GVL_Freq.S_under_mid_val;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// LFSM-O //////////////////////////////////////////////
+IF GVL_Freq.over_f_medium_threshold < current_frequency THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(current_frequency - GVL_Freq.frequency_reference);
+	overshoot_freq_error := ABS(GVL_Freq.over_f_medium_threshold - GVL_Freq.over_f_db_threshold)/20; // TO DO: parametrizzare
+	power_percentage_delta := (f_error + overshoot_freq_error)*GVL_Freq.S_over_ext_val;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// LFSM-U //////////////////////////////////////////////
+IF GVL_Freq.under_f_medium_threshold > current_frequency THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(current_frequency - GVL_Freq.frequency_reference);
+	overshoot_freq_error := ABS(GVL_Freq.under_f_medium_threshold - GVL_Freq.under_f_db_threshold)/20; // TO DO: parametrizzare
+	power_percentage_delta := (f_error + overshoot_freq_error)*GVL_Freq.S_over_ext_val;	
+END_IF
+/////////////////////////////////////////////////////////
+
+delta_p := (available_power/100) * power_percentage_delta;
+IF current_frequency > GVL_Freq.frequency_reference THEN
+	target_pfn := current_power - delta_p;
+ELSE
+	target_pfn := current_power + delta_p;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Frequency_Regulation">
+      <LineId Id="2" Count="68" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="POU_CONV_WORD_TO_LINT_FC" Id="{608a13b7-3ad1-4885-8ef8-2c0ce11536d8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION POU_CONV_WORD_TO_LINT_FC : LINT
+VAR_INPUT
+	REG1: WORD;
+	REG2: WORD;
+END_VAR
+VAR
+	APP: DWORD;
+	APP1: DWORD;
+	APP2: UDINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	APP:= WORD_TO_DWORD(REG2);
+	APP1:= SHL(WORD_TO_DWORD(REG1),16);
+	APP2:= APP1 OR APP;
+	
+	POU_CONV_WORD_TO_LINT_FC:= DWORD_TO_LINT(APP2);
+	RETURN;]]></ST>
+    </Implementation>
+    <LineIds Name="POU_CONV_WORD_TO_LINT_FC">
+      <LineId Id="18" Count="4" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

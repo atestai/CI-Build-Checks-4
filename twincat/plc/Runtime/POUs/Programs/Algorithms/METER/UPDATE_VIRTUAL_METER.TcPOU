@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Update_Virtual_Meter" Id="{ff7df90f-b7f0-4633-8239-23eb2bb8c141}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION Update_Virtual_Meter : bool
+VAR_INPUT
+END_VAR
+VAR
+	i: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[GVL.VIRTUAL_METER.active_power_prod := 0;
+GVL.VIRTUAL_METER.reactive_power_prod := 0;
+GVL.VIRTUAL_METER.frequency := 0;
+GVL.VIRTUAL_METER.measured_voltage := 0;
+
+GVL.VIRTUAL_POI_METER.active_power_prod := 0;
+GVL.VIRTUAL_POI_METER.reactive_power_prod := 0;
+GVL.VIRTUAL_POI_METER.frequency := 0;
+GVL.VIRTUAL_POI_METER.measured_voltage := 0;
+
+FOR i := 1 TO GVL.n_meter DO
+	
+	IF GVL.meter_arr[i].pos = stGRID_POS.pu THEN
+		
+		GVL.VIRTUAL_METER.active_power_prod := GVL.VIRTUAL_METER.active_power_prod + GVL.meter_arr[i].active_power_prod;
+		GVL.VIRTUAL_METER.reactive_power_prod := GVL.VIRTUAL_METER.reactive_power_prod + GVL.meter_arr[i].reactive_power_prod;
+		GVL.VIRTUAL_METER.frequency	:= GVL.VIRTUAL_METER.frequency + GVL.meter_arr[i].frequency;
+		GVL.VIRTUAL_METER.measured_voltage := GVL.VIRTUAL_METER.measured_voltage + GVL.meter_arr[i].measured_voltage;
+		
+	ELSE
+		
+		GVL.VIRTUAL_POI_METER.active_power_prod := GVL.VIRTUAL_POI_METER.active_power_prod + GVL.meter_arr[i].active_power_prod;
+		GVL.VIRTUAL_POI_METER.reactive_power_prod := GVL.VIRTUAL_POI_METER.reactive_power_prod + GVL.meter_arr[i].reactive_power_prod;
+		GVL.VIRTUAL_POI_METER.frequency	:= GVL.VIRTUAL_POI_METER.frequency + GVL.meter_arr[i].frequency;
+		GVL.VIRTUAL_POI_METER.measured_voltage := GVL.VIRTUAL_POI_METER.measured_voltage + GVL.meter_arr[i].measured_voltage;	
+	
+	END_IF
+	
+END_FOR
+
+GVL.VIRTUAL_METER.frequency := GVL.VIRTUAL_METER.frequency / GVL.n_meter_pu;
+GVL.VIRTUAL_METER.measured_voltage := GVL.VIRTUAL_METER.measured_voltage / GVL.n_meter_pu;
+GVL.VIRTUAL_METER.active_power_sp := GVL.VIRTUAL_METER.active_power_prod / GVL.power_plant.nominal_power;
+GVL.VIRTUAL_METER.reactive_power_sp := GVL.VIRTUAL_METER.reactive_power_prod / GVL.power_plant.nominal_power; 
+
+GVL.VIRTUAL_POI_METER.frequency := GVL.VIRTUAL_POI_METER.frequency / GVL.n_meter_poi;
+GVL.VIRTUAL_POI_METER.measured_voltage := GVL.VIRTUAL_POI_METER.measured_voltage / GVL.n_meter_poi;
+GVL.VIRTUAL_POI_METER.active_power_sp := GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power;
+GVL.VIRTUAL_POI_METER.reactive_power_sp := GVL.VIRTUAL_POI_METER.reactive_power_prod / GVL.power_plant.nominal_power; ]]></ST>
+    </Implementation>
+    <LineIds Name="Update_Virtual_Meter">
+      <LineId Id="43" Count="2" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="47" Count="3" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="14" Count="3" />
+      <LineId Id="35" Count="2" />
+      <LineId Id="40" Count="2" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="18" Count="3" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="52" Count="3" />
+      <LineId Id="51" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

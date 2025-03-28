@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <Task Name="FreqReg" Id="{87a5f0dd-5558-47ae-aecb-e2ef0ef6c69f}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>100000</CycleTime>
+    <Priority>1</Priority>
+    <PouCall>
+      <Name>Primary_Regulations</Name>
+    </PouCall>
+    <TaskFBGuid>{7d0063a9-3fb0-412e-a9d8-53047a3eb6ba}</TaskFBGuid>
+    <Fb_init>{2f0d386b-eaca-40a6-bf3f-29deecac9c73}</Fb_init>
+    <Fb_exit>{16725504-634a-421b-99e9-be646f7fefb1}</Fb_exit>
+    <CycleUpdate>{85927dca-4bb0-43ea-be49-91cb357c110e}</CycleUpdate>
+    <PostCycleUpdate>{a17ab3b4-0aca-48c2-8164-d0ea9e2c5971}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

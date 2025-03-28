@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="reactp_sp_from_pf" Id="{b5a8ba15-4bb4-4b1b-82c1-a6e43ffa569c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION reactp_sp_from_pf : real
+VAR_INPUT
+END_VAR
+VAR
+	current_pf: REAL;
+	i: UINT;
+	phi: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[current_pf := -1;
+
+IF GVL.WISNAM_PPC.power_factor_ctrl_enabled THEN
+	
+	FOR i := 1 TO GVL_Freq.n_pf_soil DO
+	
+		IF (GVL.VIRTUAL_METER.active_power_sp < GVL_Freq.pf_conf[i][1]) AND current_pf = -1 THEN
+			
+			current_pf := GVL_Freq.pf_conf[i][2];
+			
+		END_IF	
+	
+	END_FOR 	
+	
+	phi := ACOS(current_pf);
+	GVL_React_Pwr.max_q_pf_regulation := GVL.VIRTUAL_METER.active_power_sp * TAN(phi);
+		
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="reactp_sp_from_pf">
+      <LineId Id="8" Count="17" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

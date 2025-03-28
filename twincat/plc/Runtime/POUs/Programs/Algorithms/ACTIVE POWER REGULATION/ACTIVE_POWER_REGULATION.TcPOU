@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Active_Power_Regulation" Id="{c9782f81-469d-4755-9744-0d9d237d442b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Active_Power_Regulation
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	i: UINT;
+	difference: REAL;
+	update_pi_sp: FB_PI_Setpoint;
+	timer_sp: TON;
+	temp_sp: REAL;
+	reach_sp: FB_Reach_SP_ActP;
+	act_pwr_freq_reg_sp: FB_Frequency_Regulation;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF GVL.WISNAM_PPC.active_power_ctrl_enabled THEN
+	
+	/// 1. MULTI-INPUT REDUCER + 4. NORMALIZATION ACTIVE POWER ///////////////////////////////////////	
+	temp_sp := sp_input_reducer(sp_auto := GVL_Act_Pwr.setpoint_auto, sp_manual := GVL_Act_Pwr.setpoint_manual, sp_tso := GVL_Act_Pwr.setpoint_tso); 
+	IF temp_sp <> GVL_Act_Pwr.setpoint_mem THEN
+		GVL_Act_Pwr.setpoint := low_pass_filter(plant_target := temp_sp, filter_output_mem := GVL_Act_Pwr.setpoint_mem, alpha := GVL.plant_sp_alpha);
+		GVL_Act_Pwr.target_prod := GVL_Act_Pwr.setpoint * GVL.power_plant.nominal_power;
+	
+		IF NOT GVL_Act_Pwr.ramp_rate_follow_inv THEN
+			GVL_Act_Pwr.ramp_rate_follow_inv := TRUE;
+		END_IF
+					
+		IF NOT GVL_Act_Pwr.ramp_rate_ctrl THEN
+			GVL_Act_Pwr.ramp_rate_ctrl := TRUE;
+		END_IF 	
+			
+	END_IF
+		
+	/// 6. CONTROL ACTIVE POWER-FREQUENCY //////////////////////////////////////////	
+	GVL_Freq.frequency_smoothed := low_pass_filter(plant_target := GVL.VIRTUAL_METER.frequency, filter_output_mem := GVL_Freq.frequency_smoothed_mem, alpha := GVL_Act_Pwr.setpoint_alpha); // TO DO: valuta se imppostare alpha a 1
+	GVL_Freq.frequency_smoothed_mem := GVL_Freq.frequency_smoothed;
+	GVL_Freq.p_nd := 0;
+	
+	FOR i := 1 TO GVL.n_slave DO
+		IF GVL.inv[i].health = 1 THEN
+			GVL_Freq.p_nd := GVL_Freq.p_nd + GVL.inv[i].active_pwr_nominal_pwr;
+		END_IF
+	END_FOR
+	
+	GVL_Freq.p_nd := GVL_Freq.p_nd / GVL.power_plant.nominal_power;
+	
+	IF GVL.WISNAM_PPC.actp_freq_reg_enabled THEN
+		
+//		GVL_Freq.output_pf_regulation := deltaActivePwr_Frequency_Regulation(
+//									p_nd := GVL_Freq.p_nd, 	// scelta corretta ?? 
+//									current_frequency := GVL_Freq.frequency_smoothed, 
+//									current_power := GVL.VIRTUAL_METER.active_power_sp
+//									//pe_selector := TO_INT(0) // nella versione di codice cui ho accesso, la variabile "underFreqDropDynamicRef" è posta = 0
+//									);
+//		act_pwr_freq_reg_sp(current_power := GVL.VIRTUAL_METER.active_power_prod, 
+//							current_frequency := GVL.VIRTUAL_METER.frequency,
+//							p_nd := GVL_Freq.p_nd,
+//							target_pfn => GVL_Freq.prod_nominal_freq
+//							);
+							
+	END_IF
+	
+	
+	/// 8. TARGET LIMITER (da rivedere)//////////	
+	IF (GVL_Act_Pwr.total_sp < 0) THEN
+		GVL_Act_Pwr.total_sp := 0;
+	ELSIF  (GVL_Act_Pwr.total_sp > 1) THEN
+		GVL_Act_Pwr.total_sp := 1;
+	END_IF
+	
+	/// minimum step size: 5% ///
+	IF (GVL_Act_Pwr.setpoint_mem = 0 AND (GVL_Act_Pwr.total_sp > 0 AND GVL_Act_Pwr.total_sp < 0.05)) THEN
+		GVL_Act_Pwr.total_sp := 0.05;
+	END_IF
+	
+	IF (GVL_Act_Pwr.total_sp < 0.05 AND GVL_Act_Pwr.setpoint_mem >= 0.05) THEN
+		GVL_Act_Pwr.total_sp := 0;
+	END_IF
+	
+//	difference := GVL_Act_Pwr.setpoint - GVL_Act_Pwr.setpoint_mem; 
+//	IF ABS(difference) > GVL.power_plant_max_sp_increase AND GVL_Act_Pwr.ramp_rate_ctrl THEN
+//		IF difference > 0 THEN	
+//			GVL_Act_Pwr.setpoint := GVL_Act_Pwr.setpoint_mem + GVL.power_plant_max_sp_increase;
+//		ELSE
+//			GVL_Act_Pwr.setpoint := GVL_Act_Pwr.setpoint_mem - GVL.power_plant_max_sp_increase;
+//		END_IF
+//	END_IF
+	
+	GVL_Act_Pwr.setpoint_mem := GVL_Act_Pwr.setpoint;
+	reach_sp(sp_target_actp := GVL_Act_Pwr.setpoint); 	
+
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="Active_Power_Regulation">
+      <LineId Id="285" Count="31" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="317" Count="2" />
+      <LineId Id="444" Count="0" />
+      <LineId Id="320" Count="1" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="460" Count="0" />
+      <LineId Id="462" Count="1" />
+      <LineId Id="461" Count="0" />
+      <LineId Id="473" Count="0" />
+      <LineId Id="324" Count="1" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="329" Count="24" />
+      <LineId Id="428" Count="0" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="354" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

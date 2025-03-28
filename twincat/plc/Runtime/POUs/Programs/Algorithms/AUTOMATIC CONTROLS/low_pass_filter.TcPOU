@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="Low_Pass_Filter" Id="{89c0e4ae-c3ed-42dd-b56f-d1c65bc69cfa}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION Low_Pass_Filter : REAL
+VAR_IN_OUT
+	plant_target: REAL;
+	filter_output_mem: REAL;
+	alpha: REAL;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Low_Pass_Filter := alpha*plant_target + (1-alpha)*filter_output_mem;]]></ST>
+    </Implementation>
+    <LineIds Name="Low_Pass_Filter">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

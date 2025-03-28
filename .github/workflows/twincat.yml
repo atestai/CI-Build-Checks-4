@@ -1,0 +1,21 @@
+name: TwinCAT Build
+
+on: pull_request
+
+jobs:
+  build-twincat:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run TwinCAT Build Action
+        uses: ./.github/actions/twincat-build
+        with:
+          username: "antonino.testai@wisnam.com"
+          password: "tJdJaU4q5!kKLyH"
+          path: "twincat"
+          configuration: "release"
+          target: "TC3.1"
+          branch: "{}"

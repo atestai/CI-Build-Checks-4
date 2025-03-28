@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="power_at_nominal_freq" Id="{531d352d-4c68-4cc3-b618-8bfa7f9d83db}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION power_at_nominal_freq : real
+VAR_INPUT
+END_VAR
+VAR
+	available_power: REAL;
+	f_error: REAL;
+	power_percentage_delta: REAL;
+	overshoot_freq_error: REAL;
+	delta_p: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[available_power := GVL_Freq.p_nd * GVL.power_plant.nominal_power;
+GVL_Act_Pwr.freq_reg_sp := GVL.VIRTUAL_METER.active_power_prod;
+
+/// dead-band ////////////////////////////////////////////
+IF GVL_Freq.under_f_db_threshold <= GVL.VIRTUAL_METER.frequency AND GVL.VIRTUAL_METER.frequency <= GVL_Freq.over_f_db_threshold THEN
+	GVL_Freq.frequency_regulation_priority := FALSE;	
+	GVL_Act_Pwr.freq_reg_sp := GVL.VIRTUAL_METER.active_power_sp;
+	RETURN;
+END_IF
+/////////////////////////////////////////////////////////
+
+/// critical scenarios /////////////////////////////////
+IF GVL.VIRTUAL_METER.frequency > GVL_Freq.max_value_over_f THEN
+	GVL_Act_Pwr.freq_reg_sp := 0;
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	RETURN;
+END_IF
+
+
+IF GVL.VIRTUAL_METER.frequency < GVL_Freq.min_value_under_f THEN
+	GVL_Act_Pwr.freq_reg_sp := 1;
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	RETURN;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// FSM-O ///////////////////////////////////////////////
+IF GVL_Freq.over_f_db_threshold < GVL.VIRTUAL_METER.frequency AND GVL.VIRTUAL_METER.frequency <= GVL_Freq.over_f_medium_threshold THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(GVL.VIRTUAL_METER.frequency - GVL_Freq.frequency_reference);
+	power_percentage_delta := f_error*GVL_Freq.S_over_mid_val;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// FSM-U ///////////////////////////////////////////////
+IF GVL_Freq.under_f_db_threshold > GVL.VIRTUAL_METER.frequency AND GVL.VIRTUAL_METER.frequency >= GVL_Freq.under_f_medium_threshold THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(GVL.VIRTUAL_METER.frequency - GVL_Freq.frequency_reference);
+	power_percentage_delta := f_error*GVL_Freq.S_under_mid_val;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// LFSM-O //////////////////////////////////////////////
+IF GVL_Freq.over_f_medium_threshold < GVL.VIRTUAL_METER.frequency THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(GVL.VIRTUAL_METER.frequency - GVL_Freq.frequency_reference);
+	overshoot_freq_error := ABS(GVL_Freq.over_f_medium_threshold - GVL_Freq.over_f_db_threshold)/20; // TO DO: parametrizzare
+	power_percentage_delta := (f_error + overshoot_freq_error)*GVL_Freq.S_over_ext_val;
+END_IF
+/////////////////////////////////////////////////////////
+
+
+/// LFSM-U //////////////////////////////////////////////
+IF GVL_Freq.under_f_medium_threshold > GVL.VIRTUAL_METER.frequency THEN
+	GVL_Freq.frequency_regulation_priority := TRUE;
+	f_error := ABS(GVL.VIRTUAL_METER.frequency - GVL_Freq.frequency_reference);
+	overshoot_freq_error := ABS(GVL_Freq.under_f_medium_threshold - GVL_Freq.under_f_db_threshold)/20; // TO DO: parametrizzare
+	power_percentage_delta := (f_error + overshoot_freq_error)*GVL_Freq.S_over_ext_val;	
+END_IF
+/////////////////////////////////////////////////////////
+
+IF (power_percentage_delta / 100) > GVL_Freq.max_delta_sp THEN
+	
+	power_percentage_delta := GVL_Freq.max_delta_sp * 100;
+	
+END_IF	
+
+delta_p := (available_power/100) * power_percentage_delta;
+
+IF GVL.VIRTUAL_METER.frequency > GVL_Freq.frequency_reference THEN
+	GVL_Act_Pwr.freq_reg_sp := GVL.VIRTUAL_METER.active_power_prod - delta_p;
+ELSE
+	GVL_Act_Pwr.freq_reg_sp := GVL.VIRTUAL_METER.active_power_prod + delta_p;
+END_IF
+
+
+//reach_sp(sp_target_actp := GVL_Act_Pwr.freq_reg_sp);
+GVL_Act_Pwr.freq_reg_sp := GVL_Act_Pwr.freq_reg_sp / GVL.power_plant.nominal_power;
+]]></ST>
+    </Implementation>
+    <LineIds Name="power_at_nominal_freq">
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="4" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="16" Count="7" />
+      <LineId Id="26" Count="6" />
+      <LineId Id="35" Count="58" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Reach_SP_ActP" Id="{6ff138db-2b42-4201-9808-224aeac896db}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Reach_SP_ActP
+VAR_INPUT
+	sp_target_actp: REAL;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	update_pi_sp: FB_PI_Setpoint;
+	low_pass_filter_mem: REAL;
+	setpoint_to_send_ff: REAL;
+	filtered_sp: REAL;
+	pi_correction: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF ABS(GVL.VIRTUAL_METER.active_power_sp - sp_target_actp) > GVL_Act_Pwr.sp_tolerance THEN
+	
+	IF GVL_Act_Pwr.ff_pi_control_enable THEN
+		
+		/// 10. FEED FORWARD REGULATOR ///
+		setpoint_to_send_ff := FF_BLOCK(input_value := sp_target_actp, k_ff := 0.025);
+
+		/// 9. LOW PASS FILTER + 12. FEEDBACK ///
+		filtered_sp := Low_Pass_Filter(plant_target := sp_target_actp, filter_output_mem := low_pass_filter_mem, alpha := GVL_Act_Pwr.setpoint_alpha);
+		sp_target_actp := filtered_sp;
+
+		update_pi_sp(sp_value := filtered_sp, feedback_sp := GVL.VIRTUAL_METER.active_power_sp, pi_output => pi_correction);
+	
+		/// 13. TOTAL PLANT COMMAND ///
+		GVL_Act_Pwr.setpoint_to_send := setpoint_to_send_ff + pi_correction;
+		GVL_Act_Pwr.expected_pod_prod := GVL_Act_Pwr.setpoint_to_send*GVL.power_plant.nominal_power;
+		
+	ELSE
+		CASE GVL_Act_Pwr.active_p_ctrl_case OF
+			1: 
+				// update setpoint
+				IF GVL_Act_Pwr.ramp_rate_follow_inv THEN	// TO DO: approfondire il discorso dell'irraggiamento
+					GVL_Act_Pwr.setpoint_to_send := GVL_Act_Pwr.setpoint_alpha * sp_target_actp + (1 - GVL_Act_Pwr.setpoint_alpha)*GVL.VIRTUAL_METER.active_power_sp;
+					GVL_Act_Pwr.expected_pod_prod := GVL_Act_Pwr.setpoint_to_send*GVL.power_plant.nominal_power;
+					GVL_Act_Pwr.active_p_ctrl_case := 2;
+					GVL_Act_Pwr.setpoint_mem := GVL_Act_Pwr.setpoint;
+				END_IF
+				
+			2:
+				// wait until the plant is close to current setpoint
+				//timer_sp(IN := (ABS(GVL_Act_Pwr.setpoint_to_send - GVL.VIRTUAL_METER.active_power_sp) > 0.025), PT := GVL_Act_Pwr.time_limit_sp_application, Q =>);
+				IF ABS(GVL_Act_Pwr.setpoint_to_send - GVL.VIRTUAL_METER.active_power_sp) < 0.1 THEN
+					
+					GVL_Act_Pwr.active_p_ctrl_case := 1;
+					//timer_sp(IN := FALSE);
+					
+				ELSE
+					
+//						IF timer_sp.Q THEN
+//							timer_sp(IN := FALSE);
+//							GVL_Act_Pwr.setpoint := GVL.VIRTUAL_METER.active_power_sp;
+//							GVL_Act_Pwr.setpoint_to_send := GVL.VIRTUAL_METER.active_power_sp;
+//							GVL_Act_Pwr.ramp_rate_ctrl := FALSE;
+//							GVL_Act_Pwr.ramp_rate_follow_inv := FALSE;
+//							GVL_Act_Pwr.setpoint_mem := GVL_Act_Pwr.setpoint_to_send;
+//						END_IF
+				END_IF
+	
+			3:
+				// fault management
+		END_CASE
+		
+	END_IF
+
+	IF GVL_Act_Pwr.expected_pod_prod > GVL.power_plant.nominal_power THEN
+		GVL_Act_Pwr.setpoint_to_send := 1;
+		GVL_Act_Pwr.expected_pod_prod := GVL.power_plant.nominal_power;
+	END_IF 
+	
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Reach_SP_ActP">
+      <LineId Id="92" Count="58" />
+      <LineId Id="61" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

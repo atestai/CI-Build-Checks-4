@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stTIMESLOT" Id="{7658d1a7-f018-40aa-ac83-8c61870e5194}">
+    <Declaration><![CDATA[TYPE stTIMESLOT :
+STRUCT
+	name: STRING(255);
+	next: STRING(255);
+	start: REAL;
+	end: REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

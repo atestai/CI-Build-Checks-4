@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <DUT Name="stBESS" Id="{89f3a3bc-f0ef-4404-acd9-130c028904d6}">
+    <Declaration><![CDATA[TYPE stBESS :
+STRUCT
+	
+	soc: REAL; // [0, 1]
+	capacity: REAL;
+	available_power: REAL;
+	
+	max_tolerable_soc: REAL;
+	min_tolerable_soc: REAL;
+	
+	soc_to_remove_sp: REAL;
+	
+	max_opt_soc: REAL;
+	min_opt_soc: REAL;
+	
+	min_soc: REAL;
+	efficiency: REAL;
+	
+	min_working_soc: REAL;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

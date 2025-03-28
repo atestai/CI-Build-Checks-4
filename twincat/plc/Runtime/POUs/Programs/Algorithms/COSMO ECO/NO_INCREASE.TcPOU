@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="No_Increase" Id="{c38c698e-8c36-4625-beba-2a60d61cda53}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION No_Increase : stCMD_SET
+VAR_INPUT
+END_VAR
+VAR
+	target: REAL;
+	prod_ratio: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[GVL.power_plant.max_power_increase := GVL.power_plant.ramp_limit/(60/GVL.power_plant.sample_time);
+target := GVL.VIRTUAL_POI_METER.active_power_prod;
+
+IF GVL.VIRTUAL_METER.active_power_prod <> 0 THEN
+	prod_ratio := GVL.VIRTUAL_POI_METER.active_power_prod / GVL.VIRTUAL_METER.active_power_prod;
+END_IF
+	
+IF GVL.battery.soc < GVL.bess.min_working_soc OR prod_ratio > 2 THEN
+	
+	target := GVL.VIRTUAL_POI_METER.active_power_prod - GVL.power_plant.max_power_increase * (1 - GVL.battery.soc);
+	IF Target < 0 THEN
+		Target := 0;
+	END_IF
+
+END_IF
+
+No_Increase.command_for_battery := (GVL.VIRTUAL_METER.active_power_prod - target)/(3600 / GVL.power_plant.sample_time);
+No_Increase.plant_sp := GVL.VIRTUAL_METER.active_power_prod / GVL.power_plant.nominal_power - GVL.power_plant.safety_margin;
+
+IF GVL.battery.soc > GVL.battery.max_tolerable_soc OR (*PowerPlant.ReachingSetPoint*) GVL.battery.soc > GVL.battery.soc_to_remove_sp THEN          // If the production is increasing and the BESS is already at full charge, we can do nothing but apply a setpoint
+	
+	// PowerPlant.ReachingSetPoint := TRUE;
+	No_Increase.plant_sp := GVL.VIRTUAL_POI_METER.active_power_prod / GVL.power_plant.nominal_power - GVL.power_plant.safety_margin;
+
+ELSE
+	// PowerPlant.ReachingSetPoint := FALSE;
+	IF No_Increase.plant_sp <> 1 THEN			
+	
+		No_Increase.plant_sp := 1;
+	
+	ELSE
+
+		No_Increase.plant_sp := -2; 
+
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="No_Increase">
+      <LineId Id="81" Count="35" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

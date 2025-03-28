@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Check_Inverter_Health" Id="{50d42851-75d6-4beb-97ff-d7f77c29d566}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Check_Inverter_Health
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	i: UINT;
+	timer_heart_beat: TON;
+	check_inverter_health: ARRAY[1..GVL.n_slave] OF FB_MBReadRegs;
+	regulating_timer: TON;
+	new_check:  BOOL;
+	all_done: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT new_check THEN
+    regulating_timer(IN := TRUE, PT := T#10S);
+    IF regulating_timer.Q THEN
+         new_check := TRUE;
+         regulating_timer(IN := FALSE, PT := T#10S);
+    END_IF
+END_IF
+
+IF new_check THEN	
+	GVL.healthy_inv := 0;
+	FOR i := 1 TO GVL.n_slave DO
+		//i := 1;
+		IF GVL.inv[i].write_done THEN
+	
+			CASE GVL.inv[i].read_state OF
+			
+				0:
+					check_inverter_health[i](
+						sIPAddr:= GVL.server_addr, 
+						nTCPPort:= GVL.inv[i].tcp_port, 
+						nUnitID:= GVL.inv[i].unit_id, 
+						nQuantity:= GVL.inv[i].health, 
+						nMBAddr:= GVL.inv[i].mb_h_addr, 
+						cbLength:= SIZEOF(GVL.inv[i].health), 
+						pDestAddr:= ADR(GVL.inv[i].health), 
+						bExecute:= TRUE, 
+						tTimeout:= T#2S, 
+						bBusy=> , 
+						bError=> , 
+						nErrId=> , 
+						cbRead=> 
+					);
+					GVL.inv[i].read_state := 1;
+					
+				
+				// TO DO aggiungi un counter e un limite superato il quale stabilisci che l'inverter non funziona
+				1:
+					check_inverter_health[i](bExecute := FALSE);
+					IF NOT check_inverter_health[i].bBusy THEN
+						IF check_inverter_health[i].bError THEN 
+							GVL.inv[i].health := 0;
+						END_IF
+						GVL.inv[i].read_state := 0;
+						GVL.inv[i].read_done := TRUE; 
+					END_IF
+					
+					IF GVL.inv[i].health = 1 THEN
+						GVL.healthy_inv := GVL.healthy_inv + 1; 
+					END_IF
+				
+			END_CASE
+			
+		END_IF
+		
+	END_FOR
+	
+//ELSE
+//	GVL.healthy_inv := 0; 
+//	FOR i := 1 TO GVL.n_slave DO
+//		IF GVL.inv[i].health = 1 THEN
+//			GVL.inv[i].read_done := TRUE;
+//			GVL.healthy_inv := GVL.healthy_inv + 1;
+//		END_IF	
+//	END_FOR
+//END_IF
+
+all_done := TRUE; // all_done è una variabile booleana dichiarata in precedenza
+    FOR i := 1 TO GVL.n_slave DO
+        IF NOT GVL.inv[i].read_done THEN
+            all_done := FALSE;
+        END_IF;
+    END_FOR;
+    
+    // Se tutte le letture sono finite, si resetta new_check per preparare il prossimo ciclo
+    IF all_done THEN
+        new_check := FALSE;
+        // (Opzionale) Reset dello stato di lettura di ciascun inverter per il prossimo ciclo
+        FOR i := 1 TO GVL.n_slave DO
+            GVL.inv[i].read_done := FALSE;
+        END_FOR;
+    END_IF;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Check_Inverter_Health">
+      <LineId Id="1" Count="81" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

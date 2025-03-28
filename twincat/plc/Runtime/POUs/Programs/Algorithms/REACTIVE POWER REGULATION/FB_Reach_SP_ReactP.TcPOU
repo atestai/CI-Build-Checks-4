@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.11">
+  <POU Name="FB_Reach_SP_ReactP" Id="{81efec86-485b-4595-9456-adaa33b3097b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Reach_SP_ReactP
+VAR_INPUT
+	sp_target_reactp: REAL;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	setpoint_to_send_ff: REAL;
+	filtered_sp: REAL;
+	update_pi_sp: FB_PI_Setpoint;
+	low_pass_filter_mem: REAL;
+	pi_correction: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF ABS(GVL.VIRTUAL_METER.reactive_power_sp - sp_target_reactp) > GVL_React_Pwr.sp_tolerance_q THEN
+		
+		IF GVL_React_Pwr.ff_pi_q_control_enable THEN
+
+			/// 10. PREACTION FF ///
+			setpoint_to_send_ff := FF_BLOCK(input_value := sp_target_reactp, k_ff := 0.025);
+			
+			/// 9. LOW PASS FILTER + 12. FEEDBACK ///
+			filtered_sp := Low_Pass_Filter(plant_target := sp_target_reactp, filter_output_mem := low_pass_filter_mem_q, alpha := GVL_React_Pwr.setpoint_alpha);
+			low_pass_filter_mem_q := filtered_sp;
+		
+			update_pi_sp_q(sp_value := GVL_React_Pwr.filtered_setpoint, feedback_sp := GVL.VIRTUAL_METER.reactive_power_sp, pi_output => GVL_React_Pwr.pi_correction_q);
+			
+			/// 13. TOTAL PLANT COMMAND ///
+			GVL_React_Pwr.setpoint_to_send := setpoint_to_send_ff + pi_correction_q;
+			GVL_React_Pwr.expected_pod_prod_q := GVL_React_Pwr.setpoint_to_send * GVL.power_plant.nominal_power;
+
+		ELSE
+			
+			CASE GVL_React_Pwr.reactive_pwr_ctrl_case OF
+				1: 
+					// update setpoint
+					GVL_React_Pwr.setpoint_to_send := GVL_React_Pwr.setpoint_alpha * sp_target_reactp + (1-GVL_React_Pwr.setpoint_alpha) * GVL.VIRTUAL_METER.reactive_power_sp;
+					GVL_React_Pwr.expected_pod_prod_q := GVL_React_Pwr.setpoint_to_send*GVL.power_plant.nominal_power;
+					GVL_React_Pwr.reactive_pwr_ctrl_case := 2;
+				2:
+					// wait until the plant is close to current setpoint
+					IF ABS(GVL_React_Pwr.setpoint_to_send - GVL.VIRTUAL_METER.reactive_power_sp) < 0.1 THEN
+						GVL_React_Pwr.reactive_pwr_ctrl_case := 1;
+					END_IF
+				3:
+					// fault management
+			END_CASE  
+	   END_IF
+	   
+	   IF GVL_React_Pwr.expected_pod_prod_q > GVL.power_plant.nominal_power THEN
+			GVL_React_Pwr.setpoint_to_send := 1;
+			GVL_React_Pwr.expected_pod_prod_q := GVL.power_plant.nominal_power;
+		END_IF
+	   
+	END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_Reach_SP_ReactP">
+      <LineId Id="10" Count="39" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
